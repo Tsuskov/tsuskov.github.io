@@ -3,30 +3,14 @@ const ctx = canvas.getContext('2d');
 let W, H;
 
 let mouse = { x: 0.5 };
-let dust = [];
 
 window.addEventListener('mousemove', e => { mouse.x = e.clientX / window.innerWidth; });
 
 function init() {
   W = canvas.width  = window.innerWidth;
   H = canvas.height = window.innerHeight;
-  dust = Array.from({ length: 60 }, spawnDust);
 }
 window.addEventListener('resize', init);
-
-function spawnDust(atBottom = false) {
-  const cx = W / 2;
-  const spreadAtY = y => (y / H) * W * 0.35;
-  const y = atBottom ? H + 10 : Math.random() * H;
-  const sp = spreadAtY(y);
-  return {
-    x: cx + (Math.random() - 0.5) * sp * 2,
-    y,
-    vy: -(Math.random() * 0.5 + 0.2),
-    size: Math.random() * 1.5 + 0.4,
-    opacity: Math.random() * 0.5 + 0.1,
-  };
-}
 
 function drawBackground() {
   const grad = ctx.createLinearGradient(0, 0, 0, H);
@@ -175,31 +159,6 @@ function drawBat(cx, cy, scale, t) {
   ctx.restore();
 }
 
-function updateDust(cx) {
-  for (const p of dust) {
-    p.y += p.vy;
-    // drift toward beam center as they rise
-    const targetX = cx + (p.x - cx) * 0.998;
-    p.x = targetX;
-    if (p.y < -10) {
-      const sp = (p.y / H) * W * 0.35;
-      p.y = H + 5;
-      p.x = cx + (Math.random() - 0.5) * Math.abs(sp) * 2;
-      p.vy  = -(Math.random() * 0.5 + 0.2);
-      p.opacity = Math.random() * 0.5 + 0.1;
-      p.size = Math.random() * 1.5 + 0.4;
-    }
-  }
-}
-
-function drawDust() {
-  for (const p of dust) {
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255, 230, 120, ${p.opacity})`;
-    ctx.fill();
-  }
-}
 
 function draw(ts) {
   const t = ts / 1000;
@@ -210,9 +169,6 @@ function draw(ts) {
   const cx = W / 2 + (mouse.x - 0.5) * W * 0.08 + Math.sin(t * 0.25) * 12;
 
   drawBeam(cx, t);
-  updateDust(cx);
-  drawDust();
-
   const batScale = Math.min(W * 0.12, H * 0.14);
   drawBat(cx, H * 0.36, batScale, t);
 

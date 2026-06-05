@@ -1,0 +1,133 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #0d0d0d;
+  color: #c9d1d9;
+  font-family: 'Courier New', Courier, monospace;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+canvas#particles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+#terminal {
+  position: relative;
+  z-index: 10;
+  width: min(720px, 92vw);
+  max-height: 80vh;
+  background: rgba(13, 17, 23, 0.82);
+  border: 1px solid #30363d;
+  border-radius: 10px;
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 40px rgba(88, 166, 255, 0.08);
+}
+
+#terminal-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: rgba(22, 27, 34, 0.9);
+  border-bottom: 1px solid #30363d;
+  border-radius: 10px 10px 0 0;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.dot.red    { background: #ff5f57; }
+.dot.yellow { background: #febc2e; }
+.dot.green  { background: #28c840; }
+
+.terminal-title {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #8b949e;
+}
+
+#output {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 18px 8px;
+  font-size: 14px;
+  line-height: 1.7;
+  scroll-behavior: smooth;
+}
+
+#output::-webkit-scrollbar { width: 4px; }
+#output::-webkit-scrollbar-track { background: transparent; }
+#output::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+
+#input-line {
+  display: flex;
+  align-items: center;
+  padding: 8px 18px 14px;
+  gap: 6px;
+}
+
+.prompt {
+  color: #58a6ff;
+  font-size: 14px;
+  user-select: none;
+}
+
+#cmd-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #e6edf3;
+  font-family: inherit;
+  font-size: 14px;
+  caret-color: #58a6ff;
+}
+
+/* Output line types */
+.line-cmd   { color: #e6edf3; }
+.line-info  { color: #8b949e; }
+.line-success { color: #3fb950; }
+.line-accent  { color: #58a6ff; }
+.line-warn    { color: #d29922; }
+.line-error   { color: #f85149; }
+.line-blank   { height: 6px; }
+
+.section-title {
+  color: #58a6ff;
+  font-weight: bold;
+  margin-top: 4px;
+}
+
+.tag {
+  display: inline-block;
+  background: rgba(88, 166, 255, 0.12);
+  color: #58a6ff;
+  border: 1px solid rgba(88, 166, 255, 0.3);
+  border-radius: 4px;
+  padding: 1px 7px;
+  font-size: 12px;
+  margin: 2px 3px 2px 0;
+}
+
+a {
+  color: #58a6ff;
+  text-decoration: none;
+}
+a:hover { text-decoration: underline; }

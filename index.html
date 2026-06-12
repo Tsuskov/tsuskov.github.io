@@ -7,18 +7,13 @@
         <link rel="stylesheet" href="style.css" />
     </head>
     <body>
-        <canvas id="particles"></canvas>
-        <pre id="bat-logo">
-         _,    _   _    ,_
-    .o888P     Y8o8Y     Y888o.
-   d88888      88888      88888b
-  d888888b_  _d88888b_  _d888888b
-  8888888888888888888888888888888
-  8888888888888888888888888888888
-  YJGS8P"Y888P"Y888P"Y888P"Y8888P
-   Y888   '8'   Y8P   '8'   888Y
-    '8o          V          o8'
-      `                     `</pre>
-        <script src="particles.js"></script>
+        <div id="glass-panel">
+            <div class="panel-header">
+                <span class="panel-title">@tsuskov on GitHub</span>
+                <span class="panel-total" id="contrib-total"></span>
+            </div>
+            <div id="contrib-graph"></div>
+        </div>
+        <script src="contributions.js"></script>
     </body>
 </html>

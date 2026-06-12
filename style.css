@@ -1,48 +1,69 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  background: #07070e;
+  background: #000;
   height: 100vh;
   overflow: hidden;
 }
 
-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-#bat-logo {
+#glass-panel {
   position: fixed;
-  top: 20px;
-  right: 20px;
-  font-family: monospace;
-  font-size: 18px;
-  line-height: 1.2;
-  color: rgba(255, 210, 0, 0.9);
-  text-shadow:
-    0 0 6px  rgba(255, 220, 0, 0.9),
-    0 0 18px rgba(255, 180, 0, 0.6),
-    0 0 40px rgba(255, 140, 0, 0.3);
-  animation: shimmer 2.4s ease-in-out infinite;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 92vw;
+  padding: 24px 28px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03));
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: rgba(255, 255, 255, 0.92);
   z-index: 10;
-  pointer-events: none;
 }
 
-@keyframes shimmer {
-  0%, 100% {
-    color: rgba(255, 210, 0, 0.9);
-    text-shadow:
-      0 0 6px  rgba(255, 220, 0, 0.9),
-      0 0 18px rgba(255, 180, 0, 0.6),
-      0 0 40px rgba(255, 140, 0, 0.3);
-  }
-  50% {
-    color: rgba(255, 240, 120, 1);
-    text-shadow:
-      0 0 10px rgba(255, 240, 100, 1),
-      0 0 30px rgba(255, 200, 0, 0.9),
-      0 0 60px rgba(255, 160, 0, 0.5),
-      0 0 90px rgba(255, 120, 0, 0.2);
-  }
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 24px;
+  margin-bottom: 16px;
 }
+
+.panel-title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.panel-total {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+#contrib-graph {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, 10px);
+  gap: 3px;
+  overflow-x: auto;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+#contrib-graph .cell {
+  width: 10px;
+  height: 10px;
+  border-radius: 2.5px;
+}
+
+.cell.level-0 { background: rgba(255, 255, 255, 0.07); }
+.cell.level-1 { background: #0e4429; }
+.cell.level-2 { background: #006d32; }
+.cell.level-3 { background: #26a641; }
+.cell.level-4 { background: #39d353; }

@@ -16,6 +16,34 @@ async function fetchJSON(url, cacheKey) {
   }
 }
 
+// x-ray the live avatar in canvas pixels — CSS filters/blend modes
+// render unreliably on iOS Safari
+function loadAvatar() {
+  const canvas = document.getElementById('avatar');
+  const ctx    = canvas.getContext('2d');
+  const img    = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    try {
+      const id = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d  = id.data;
+      for (let i = 0; i < d.length; i += 4) {
+        // invert luminance, then brightness 1.15 / contrast 1.1 (as the old CSS)
+        let v = 255 - (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]);
+        v = (v * 1.15 - 128) * 1.1 + 128;
+        v = Math.max(0, Math.min(255, v));
+        d[i] = d[i + 1] = d[i + 2] = 255;
+        d[i + 3] = v; // alpha from brightness: black background melts away
+      }
+      ctx.putImageData(id, 0, 0);
+    } catch {
+      // canvas tainted (no CORS) — keep the plain avatar already drawn
+    }
+  };
+  img.src = `https://avatars.githubusercontent.com/${USERNAME}`;
+}
+
 async function loadContributions() {
   const graph = document.getElementById('contrib-graph');
   try {
@@ -80,6 +108,7 @@ async function loadRepos() {
   }
 }
 
+loadAvatar();
 loadContributions();
 loadProfile();
 loadRepos();

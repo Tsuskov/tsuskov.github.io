@@ -23,4 +23,47 @@ async function loadContributions() {
   }
 }
 
+async function loadProfile() {
+  const stats = document.getElementById('profile-stats');
+  try {
+    const res  = await fetch(`https://api.github.com/users/${USERNAME}`);
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    stats.textContent =
+      `${data.public_repos} repos · ${data.followers} followers · est. ${new Date(data.created_at).getFullYear()}`;
+  } catch {
+    stats.textContent = '';
+  }
+}
+
+async function loadRepos() {
+  const list = document.getElementById('repo-list');
+  try {
+    const res   = await fetch(`https://api.github.com/users/${USERNAME}/repos?sort=pushed&per_page=100`);
+    if (!res.ok) throw new Error(res.status);
+    const repos = (await res.json()).filter((r) => !r.fork).slice(0, 6);
+
+    for (const repo of repos) {
+      const card = document.createElement('a');
+      card.className = 'repo-card';
+      card.href = repo.html_url;
+
+      const name = document.createElement('span');
+      name.className = 'repo-name';
+      name.textContent = repo.name;
+
+      const lang = document.createElement('span');
+      lang.className = 'repo-lang';
+      lang.textContent = repo.language || '—';
+
+      card.append(name, lang);
+      list.appendChild(card);
+    }
+  } catch {
+    list.textContent = 'Could not load repositories.';
+  }
+}
+
 loadContributions();
+loadProfile();
+loadRepos();

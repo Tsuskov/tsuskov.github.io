@@ -7,13 +7,41 @@
         <link rel="stylesheet" href="style.css" />
     </head>
     <body>
-        <div id="glass-panel">
-            <div class="panel-header">
-                <span class="panel-title">@tsuskov on GitHub</span>
-                <span class="panel-total" id="contrib-total"></span>
-            </div>
-            <div id="contrib-graph"></div>
-        </div>
+        <main class="container">
+            <header class="profile">
+                <div class="avatar-frame">
+                    <img id="avatar" src="https://github.com/tsuskov.png" alt="tsuskov" />
+                </div>
+                <h1 class="profile-name">Tim Suskov</h1>
+                <p class="profile-sub">
+                    Berlin ·
+                    <a href="https://github.com/tsuskov">github.com/tsuskov</a>
+                </p>
+                <p class="profile-stats" id="profile-stats"></p>
+            </header>
+
+            <section class="section">
+                <h2 class="section-title">Contributions</h2>
+                <p class="section-sub" id="contrib-total"></p>
+                <div id="contrib-graph"></div>
+            </section>
+
+            <section class="section">
+                <h2 class="section-title">Repositories</h2>
+                <div id="repo-list"></div>
+            </section>
+
+            <section class="section">
+                <h2 class="section-title">Specimen</h2>
+                <img id="batman" src="batman.png" alt="Batman x-ray" />
+                <p class="caption">subject: lego batman · former identity · status: deceased</p>
+            </section>
+
+            <footer class="footer">
+                <a href="https://github.com/tsuskov">github.com/tsuskov</a>
+            </footer>
+        </main>
+
         <script src="contributions.js"></script>
     </body>
 </html>

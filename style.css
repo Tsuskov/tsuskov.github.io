@@ -1,69 +1,230 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  background: #000;
-  height: 100vh;
-  overflow: hidden;
+  background-color: #020202;
+  /* barely-visible dark mottle, like unexposed film */
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.35' numOctaves='3' seed='5'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0.04 0 0 0 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E");
+  font-family: "Courier New", Courier, monospace;
+  color: rgba(245, 245, 245, 0.92);
 }
 
-#glass-panel {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  max-width: 92vw;
-  padding: 24px 28px;
-  border-radius: 24px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03));
-  -webkit-backdrop-filter: blur(18px) saturate(160%);
-  backdrop-filter: blur(18px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.06);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: rgba(255, 255, 255, 0.92);
-  z-index: 10;
+a {
+  color: inherit;
+  text-decoration: underline dotted rgba(255, 255, 255, 0.4);
 }
 
-.panel-header {
+/* mobile-first: single column, comfortable thumb-width padding */
+.container {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 48px 20px 0;
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 24px;
-  margin-bottom: 16px;
+  flex-direction: column;
+  gap: 56px;
 }
 
-.panel-title {
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+/* ── profile header ────────────────────────────────────────────────────── */
+.profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
 }
 
-.panel-total {
+/* the frame clips to a circle; the filtered img inside must not carry
+   border-radius itself (Safari drops the rounding when filter is present) */
+.avatar-frame {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.18);
+}
+
+#avatar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* x-ray: invert to white-on-black, desaturate */
+  filter:
+    grayscale(1)
+    invert(1)
+    brightness(1.15)
+    contrast(1.1)
+    blur(0.4px);
+  mix-blend-mode: screen;
+}
+
+.profile-name {
+  font-size: 26px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  margin-right: -0.18em;
+  text-shadow:
+    0 0 14px rgba(255, 255, 255, 0.55),
+    0 0 50px rgba(255, 255, 255, 0.2);
+}
+
+.profile-sub {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(245, 245, 245, 0.65);
+}
+
+.profile-stats {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(245, 245, 245, 0.45);
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+/* ── sections ──────────────────────────────────────────────────────────── */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.section-title {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.55);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: rgba(245, 245, 245, 0.5);
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
+.section-sub {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(245, 245, 245, 0.6);
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+/* ── contributions ─────────────────────────────────────────────────────── */
+/* fits the full year like a static image — no scrolling */
 #contrib-graph {
   display: grid;
   grid-auto-flow: column;
-  grid-template-rows: repeat(7, 10px);
-  gap: 3px;
-  overflow-x: auto;
+  grid-template-rows: repeat(7, 1fr);
+  grid-auto-columns: 1fr;
+  gap: 2px;
+  width: 100%;
+  aspect-ratio: 53 / 7;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(245, 245, 245, 0.55);
 }
 
 #contrib-graph .cell {
-  width: 10px;
-  height: 10px;
-  border-radius: 2.5px;
+  border-radius: 1px;
 }
 
-.cell.level-0 { background: rgba(255, 255, 255, 0.07); }
-.cell.level-1 { background: #0e4429; }
-.cell.level-2 { background: #006d32; }
-.cell.level-3 { background: #26a641; }
-.cell.level-4 { background: #39d353; }
+.cell.level-0 { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); }
+.cell.level-1 { background: rgba(255, 255, 255, 0.22); }
+.cell.level-2 { background: rgba(255, 255, 255, 0.45); }
+.cell.level-3 {
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
+}
+.cell.level-4 {
+  background: #ffffff;
+  box-shadow: 0 0 7px rgba(255, 255, 255, 0.85);
+}
+
+/* ── repositories ──────────────────────────────────────────────────────── */
+#repo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.repo-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.03);
+  text-decoration: none;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.repo-card:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 0 24px rgba(255, 255, 255, 0.08),
+    inset 0 0 30px rgba(255, 255, 255, 0.05);
+}
+
+.repo-name {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+  word-break: break-word;
+}
+
+.repo-lang {
+  flex-shrink: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(245, 245, 245, 0.45);
+}
+
+/* ── specimen ──────────────────────────────────────────────────────────── */
+#batman {
+  width: min(260px, 70vw);
+  align-self: center;
+  /* image is already an x-ray; screen-blend melts its black bg into the page */
+  mix-blend-mode: screen;
+}
+
+.caption {
+  align-self: center;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: rgba(245, 245, 245, 0.4);
+}
+
+/* ── footer ────────────────────────────────────────────────────────────── */
+.footer {
+  padding: 40px 0 48px;
+  text-align: center;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(245, 245, 245, 0.45);
+}
+
+/* larger screens: a bit more air and bigger type */
+@media (min-width: 600px) {
+  .container {
+    padding-top: 80px;
+    gap: 72px;
+  }
+
+  .avatar-frame {
+    width: 140px;
+    height: 140px;
+  }
+
+  .profile-name {
+    font-size: 36px;
+  }
+
+  #contrib-graph {
+    gap: 3px;
+  }
+}

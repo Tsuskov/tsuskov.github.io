@@ -1,11 +1,28 @@
 const USERNAME = 'tsuskov';
 
+// fetch with localStorage fallback: the unauthenticated GitHub API allows
+// 60 requests/hour per IP, so reuse the last good response when it fails
+async function fetchJSON(url, cacheKey) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    localStorage.setItem(cacheKey, JSON.stringify(data));
+    return data;
+  } catch (err) {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) return JSON.parse(cached);
+    throw err;
+  }
+}
+
 async function loadContributions() {
   const graph = document.getElementById('contrib-graph');
   try {
-    const res  = await fetch(`https://github-contributions-api.jogruber.de/v4/${USERNAME}?y=last`);
-    if (!res.ok) throw new Error(res.status);
-    const data = await res.json();
+    const data = await fetchJSON(
+      `https://github-contributions-api.jogruber.de/v4/${USERNAME}?y=last`,
+      'contributions'
+    );
 
     document.getElementById('contrib-total').textContent =
       `${data.total.lastYear} contributions in the last year`;
@@ -26,9 +43,7 @@ async function loadContributions() {
 async function loadProfile() {
   const stats = document.getElementById('profile-stats');
   try {
-    const res  = await fetch(`https://api.github.com/users/${USERNAME}`);
-    if (!res.ok) throw new Error(res.status);
-    const data = await res.json();
+    const data = await fetchJSON(`https://api.github.com/users/${USERNAME}`, 'profile');
     stats.textContent =
       `${data.public_repos} repos · ${data.followers} followers · est. ${new Date(data.created_at).getFullYear()}`;
   } catch {
@@ -39,9 +54,10 @@ async function loadProfile() {
 async function loadRepos() {
   const list = document.getElementById('repo-list');
   try {
-    const res   = await fetch(`https://api.github.com/users/${USERNAME}/repos?sort=pushed&per_page=100`);
-    if (!res.ok) throw new Error(res.status);
-    const repos = (await res.json()).filter((r) => !r.fork).slice(0, 6);
+    const repos = (await fetchJSON(
+      `https://api.github.com/users/${USERNAME}/repos?sort=pushed&per_page=100`,
+      'repos'
+    )).filter((r) => !r.fork).slice(0, 6);
 
     for (const repo of repos) {
       const card = document.createElement('a');

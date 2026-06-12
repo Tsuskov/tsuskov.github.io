@@ -33,28 +33,14 @@ a {
   text-align: center;
 }
 
-/* the frame clips to a circle; the filtered img inside must not carry
-   border-radius itself (Safari drops the rounding when filter is present) */
-.avatar-frame {
+/* the x-ray treatment and circular crop are baked into the PNG itself —
+   CSS filters/blend modes render unreliably on iOS Safari */
+#avatar {
+  display: block;
   width: 110px;
   height: 110px;
   border-radius: 50%;
-  overflow: hidden;
   box-shadow: 0 0 24px rgba(255, 255, 255, 0.18);
-}
-
-#avatar {
-  display: block;
-  width: 100%;
-  height: 100%;
-  /* x-ray: invert to white-on-black, desaturate */
-  filter:
-    grayscale(1)
-    invert(1)
-    brightness(1.15)
-    contrast(1.1)
-    blur(0.4px);
-  mix-blend-mode: screen;
 }
 
 .profile-name {
@@ -215,7 +201,7 @@ a {
     gap: 72px;
   }
 
-  .avatar-frame {
+  #avatar {
     width: 140px;
     height: 140px;
   }

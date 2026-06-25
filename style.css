@@ -1,27 +1,68 @@
+:root {
+  /* Emil easing curves */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.14);
+  --text: #18181b;
+  --text-muted: #71717a;
+  --text-faint: #a1a1aa;
+  --accent: #18181b;
+  --hover: #f4f4f5;
+
+  /* contribution scale */
+  --c0: #ebedf0;
+  --c1: #9be9a8;
+  --c2: #40c463;
+  --c3: #30a14e;
+  --c4: #216e39;
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  background-color: #020202;
-  /* barely-visible dark mottle, like unexposed film */
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.35' numOctaves='3' seed='5'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0.04 0 0 0 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E");
-  font-family: "Courier New", Courier, monospace;
-  color: rgba(245, 245, 245, 0.92);
+  background-color: var(--bg);
+  /* whisper-faint dot grid for texture, not noise */
+  background-image: radial-gradient(rgba(0, 0, 0, 0.035) 1px, transparent 1px);
+  background-size: 22px 22px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  color: var(--text);
+  line-height: 1.5;
 }
 
 a {
   color: inherit;
-  text-decoration: underline dotted rgba(255, 255, 255, 0.4);
+  text-decoration: none;
 }
 
-/* mobile-first: single column, comfortable thumb-width padding */
+/* ── layout ────────────────────────────────────────────────────────────── */
 .container {
   max-width: 640px;
   margin: 0 auto;
-  padding: 48px 20px 0;
+  padding: 56px 20px 0;
   display: flex;
   flex-direction: column;
-  gap: 56px;
+  gap: 48px;
+}
+
+/* page entrance: each block fades up, gently staggered */
+.profile,
+.section {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: blockIn 520ms var(--ease-out) forwards;
+}
+.profile  { animation-delay: 40ms; }
+.section:nth-of-type(1) { animation-delay: 110ms; }
+.section:nth-of-type(2) { animation-delay: 170ms; }
+.section:nth-of-type(3) { animation-delay: 230ms; }
+
+@keyframes blockIn {
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ── profile header ────────────────────────────────────────────────────── */
@@ -29,188 +70,431 @@ a {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   text-align: center;
 }
 
-/* x-ray effect is computed in canvas pixels (contributions.js) — no CSS
-   filters/blend modes, which render unreliably on iOS Safari */
 #avatar {
   display: block;
-  width: 110px;
-  height: 110px;
+  width: 104px;
+  height: 104px;
   border-radius: 50%;
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.18);
+  background: var(--hover);
+  object-fit: cover;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.10);
+  transition: transform 240ms var(--ease-out), box-shadow 240ms var(--ease-out);
+  cursor: pointer;
+}
+
+/* fun: click the avatar for a quick flip */
+#avatar.spin { animation: flip 720ms var(--ease-in-out); }
+
+@keyframes flip {
+  to { transform: rotateY(360deg); }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #avatar:hover {
+    transform: scale(1.04);
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.08),
+      0 14px 34px rgba(0, 0, 0, 0.14);
+  }
 }
 
 .profile-name {
-  font-size: 26px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  margin-right: -0.18em;
-  text-shadow:
-    0 0 14px rgba(255, 255, 255, 0.55),
-    0 0 50px rgba(255, 255, 255, 0.2);
+  font-size: 30px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  cursor: default;
+}
+
+/* fun: hover the name and a colour shimmer sweeps across it */
+@media (hover: hover) and (pointer: fine) {
+  .profile-name:hover {
+    background: linear-gradient(110deg, var(--text) 30%, #6366f1 50%, var(--text) 70%);
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 900ms var(--ease-in-out);
+  }
+}
+
+@keyframes shimmer {
+  from { background-position: 120% 0; }
+  to   { background-position: -120% 0; }
 }
 
 .profile-sub {
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: rgba(245, 245, 245, 0.65);
+  font-size: 14px;
+  color: var(--text-muted);
 }
 
+.profile-sub a {
+  border-bottom: 1px solid var(--border-strong);
+  padding-bottom: 1px;
+  transition: border-color 160ms var(--ease-out), color 160ms var(--ease-out);
+}
+.profile-sub a:hover { border-color: var(--text); }
+
 .profile-stats {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(245, 245, 245, 0.45);
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+  font-size: 12.5px;
+  color: var(--text-faint);
+  letter-spacing: 0.01em;
 }
 
 /* ── sections ──────────────────────────────────────────────────────────── */
 .section {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
 .section-title {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.3em;
-  color: rgba(245, 245, 245, 0.5);
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
 }
 
 .section-sub {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(245, 245, 245, 0.6);
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: -4px;
 }
 
 /* ── contributions ─────────────────────────────────────────────────────── */
-/* fits the full year like a static image — no scrolling */
 #contrib-graph {
   display: grid;
   grid-auto-flow: column;
   grid-template-rows: repeat(7, 1fr);
   grid-auto-columns: 1fr;
-  gap: 2px;
+  gap: 3px;
   width: 100%;
   aspect-ratio: 53 / 7;
-  font-size: 12px;
-  color: rgba(245, 245, 245, 0.55);
 }
 
 #contrib-graph .cell {
-  border-radius: 1px;
+  border-radius: 2px;
+  background: var(--c0);
+  /* one-time reveal: a soft wave from left to right (delay set per-column in JS).
+     `backwards` shows the start state during the delay, then releases the
+     transform so hover interactions can take over afterwards. */
+  animation: cellIn 380ms var(--ease-out) backwards;
+  animation-delay: var(--cell-delay, 0ms);
 }
 
-.cell.level-0 { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); }
-.cell.level-1 { background: rgba(255, 255, 255, 0.22); }
-.cell.level-2 { background: rgba(255, 255, 255, 0.45); }
-.cell.level-3 {
-  background: rgba(255, 255, 255, 0.72);
-  box-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
+@keyframes cellIn {
+  from { opacity: 0; transform: scale(0.6); }
+  to   { opacity: 1; transform: scale(1); }
 }
-.cell.level-4 {
-  background: #ffffff;
-  box-shadow: 0 0 7px rgba(255, 255, 255, 0.85);
+
+/* qualify with the id so these beat the base `#contrib-graph .cell` rule */
+#contrib-graph .cell.level-1 { background: var(--c1); }
+#contrib-graph .cell.level-2 { background: var(--c2); }
+#contrib-graph .cell.level-3 { background: var(--c3); }
+#contrib-graph .cell.level-4 { background: var(--c4); }
+
+/* playful: sweep the mouse across the graph and the days pop up */
+@media (hover: hover) and (pointer: fine) {
+  #contrib-graph .cell {
+    transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out);
+  }
+  #contrib-graph .cell:hover {
+    transform: scale(1.55);
+    border-radius: 3px;
+    z-index: 2;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
+  }
 }
 
 /* ── repositories ──────────────────────────────────────────────────────── */
 #repo-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .repo-card {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: flex-start;
   gap: 16px;
-  padding: 14px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.03);
-  box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.03);
-  text-decoration: none;
-  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  padding: 15px 17px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transform-origin: center;
+  transition:
+    transform 130ms var(--ease-out),
+    box-shadow 180ms var(--ease-out),
+    border-color 180ms var(--ease-out);
+  /* staggered entrance once the list is filled (`backwards` releases the
+     transform afterwards so the play-tilt can take over) */
+  animation: cardIn 420ms var(--ease-out) backwards;
+}
+.repo-card:nth-child(1) { animation-delay: 30ms; }
+.repo-card:nth-child(2) { animation-delay: 65ms; }
+.repo-card:nth-child(3) { animation-delay: 100ms; }
+.repo-card:nth-child(4) { animation-delay: 135ms; }
+.repo-card:nth-child(5) { animation-delay: 170ms; }
+.repo-card:nth-child(6) { animation-delay: 205ms; }
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.repo-card:hover {
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow:
-    0 0 24px rgba(255, 255, 255, 0.08),
-    inset 0 0 30px rgba(255, 255, 255, 0.05);
+/* shadow + border lift on hover; the 3D tilt itself is driven in JS */
+@media (hover: hover) and (pointer: fine) {
+  .repo-card:hover {
+    border-color: var(--border-strong);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.10);
+  }
+}
+
+.repo-card:active { transform: scale(0.98); }
+
+.repo-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 
 .repo-name {
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   word-break: break-word;
+}
+
+.repo-desc {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-muted);
 }
 
 .repo-lang {
   flex-shrink: 0;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(245, 245, 245, 0.45);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  padding-top: 2px;
 }
 
-/* ── specimen ──────────────────────────────────────────────────────────── */
-#batman {
-  width: min(260px, 70vw);
-  align-self: center;
-  /* image is already an x-ray; screen-blend melts its black bg into the page */
-  mix-blend-mode: screen;
+.repo-lang::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--c3);
+  flex-shrink: 0;
 }
 
-.caption {
-  align-self: center;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  color: rgba(245, 245, 245, 0.4);
+/* ── diversion: reflex game ────────────────────────────────────────────── */
+.game {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.game-hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.game-score {
+  font-size: 26px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+/* a small pop each time the score ticks up (class re-triggered in JS) */
+.game-score.bump { animation: scoreBump 240ms var(--ease-out); }
+@keyframes scoreBump {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+.game-best {
+  font-size: 12.5px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* slim countdown bar; the fill drains left over the round (driven in JS) */
+.game-track {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--c0);
+  overflow: hidden;
+}
+.game-fill {
+  height: 100%;
+  width: 100%;
+  border-radius: inherit;
+  background: var(--c3);
+  transform-origin: left center;
+}
+
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  aspect-ratio: 1;
+}
+
+.game-cell {
+  border-radius: 8px;
+  background: var(--c0);
+  /* only transform/opacity/shadow animate — cheap, GPU-friendly */
+  transition:
+    transform 150ms var(--ease-out),
+    box-shadow 200ms var(--ease-out),
+    background-color 220ms var(--ease-out);
+}
+
+.game-cell.lit {
+  background: var(--c2);
+  box-shadow: 0 4px 14px rgba(48, 161, 78, 0.35);
+}
+
+/* press feedback — the whole grid is the playfield */
+@media (hover: hover) and (pointer: fine) {
+  .game-cell.lit:hover { transform: scale(1.04); }
+}
+.game.playing .game-cell { cursor: pointer; }
+.game.playing .game-cell:active { transform: scale(0.94); }
+
+/* a quick ring-out pop when a lit cell is caught */
+.game-cell.hit { animation: cellHit 320ms var(--ease-out); }
+@keyframes cellHit {
+  0%   { transform: scale(1); box-shadow: 0 0 0 0 rgba(48, 161, 78, 0.5); }
+  40%  { transform: scale(1.1); }
+  100% { transform: scale(1); box-shadow: 0 0 0 12px rgba(48, 161, 78, 0); }
+}
+
+/* a gentle nudge on a wrong tap — feedback without punishment */
+.game-cell.miss { animation: cellMiss 260ms var(--ease-in-out); }
+@keyframes cellMiss {
+  0%, 100% { transform: translateX(0); }
+  30%      { transform: translateX(-3px); }
+  70%      { transform: translateX(3px); }
+}
+
+/* overlay holds the start / replay button; fades + blurs out during play */
+.game-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(2px);
+  transition: opacity 220ms var(--ease-out);
+}
+.game.playing .game-overlay {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.game-btn {
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--surface);
+  background: var(--accent);
+  border: none;
+  border-radius: 11px;
+  padding: 11px 22px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+  transition: transform 140ms var(--ease-out), box-shadow 180ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .game-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.20);
+  }
+}
+.game-btn:active { transform: scale(0.96); }
+
+/* ── konami easter egg: the playfield overloads ────────────────────────── */
+body.freakout .game-grid { animation: rainbow 900ms linear 3; }
+body.freakout #contrib-graph { animation: rainbow 900ms linear 3; }
+
+@keyframes rainbow {
+  to { filter: hue-rotate(360deg); }
+}
+
+body.freakout .profile-name {
+  animation: shake 480ms var(--ease-in-out) 3;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-5px) rotate(-2deg); }
+  75%      { transform: translateX(5px) rotate(2deg); }
 }
 
 /* ── footer ────────────────────────────────────────────────────────────── */
 .footer {
-  padding: 40px 0 48px;
+  padding: 44px 0 52px;
   text-align: center;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: rgba(245, 245, 245, 0.45);
+  font-size: 12px;
+  color: var(--text-faint);
 }
 
-/* larger screens: a bit more air and bigger type */
+.footer a {
+  border-bottom: 1px solid var(--border-strong);
+  padding-bottom: 1px;
+  transition: border-color 160ms var(--ease-out), color 160ms var(--ease-out);
+}
+.footer a:hover { color: var(--text); border-color: var(--text); }
+
+/* ── larger screens ────────────────────────────────────────────────────── */
 @media (min-width: 600px) {
-  .container {
-    padding-top: 80px;
-    gap: 72px;
-  }
+  .container { padding-top: 88px; gap: 64px; }
+  #avatar { width: 120px; height: 120px; }
+  .profile-name { font-size: 38px; }
+}
 
-  #avatar {
-    width: 140px;
-    height: 140px;
+/* ── reduced motion: keep fades, drop movement ─────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .profile, .section, .repo-card, #contrib-graph .cell {
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
-
-  .profile-name {
-    font-size: 36px;
-  }
-
-  #contrib-graph {
-    gap: 3px;
-  }
+  #avatar.spin,
+  body.freakout .game-grid, body.freakout #contrib-graph,
+  body.freakout .profile-name { animation: none; }
+  #avatar:hover { transform: none; }
+  .repo-card:hover { transform: none; }
+  #contrib-graph .cell:hover { transform: scale(1.3); }
+  /* keep the game playable: colour cues stay, movement drops */
+  .game-cell, .game-cell.hit, .game-cell.miss,
+  .game-score { animation: none; transition: background-color 180ms var(--ease-out); }
+  .game-cell.lit:hover, .game.playing .game-cell:active,
+  .game-score.bump { transform: none; }
 }

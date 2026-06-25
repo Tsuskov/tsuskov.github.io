@@ -18,7 +18,7 @@
     <body>
         <main class="container">
             <header class="profile">
-                <canvas id="avatar" width="280" height="280" aria-label="tsuskov"></canvas>
+                <img id="avatar" width="280" height="280" alt="tsuskov" />
                 <h1 class="profile-name">Tim Suskov</h1>
                 <p class="profile-sub">
                     Berlin ·
@@ -39,9 +39,19 @@
             </section>
 
             <section class="section">
-                <h2 class="section-title">Specimen</h2>
-                <img id="batman" src="batman.png" alt="Batman x-ray" />
-                <p class="caption">subject: lego batman · former identity · status: deceased</p>
+                <h2 class="section-title">Diversion</h2>
+                <p class="section-sub">Reflex — tap the lit square. 15 seconds.</p>
+                <div class="game" id="game">
+                    <div class="game-hud">
+                        <span class="game-score" id="game-score">0</span>
+                        <span class="game-best" id="game-best">best 0</span>
+                    </div>
+                    <div class="game-track"><div class="game-fill" id="game-fill"></div></div>
+                    <div class="game-grid" id="game-grid"></div>
+                    <div class="game-overlay" id="game-overlay">
+                        <button class="game-btn" id="game-btn">Start</button>
+                    </div>
+                </div>
             </section>
 
             <footer class="footer">

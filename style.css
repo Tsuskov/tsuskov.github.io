@@ -60,6 +60,7 @@ a {
 .section:nth-of-type(1) { animation-delay: 110ms; }
 .section:nth-of-type(2) { animation-delay: 170ms; }
 .section:nth-of-type(3) { animation-delay: 230ms; }
+.section:nth-of-type(4) { animation-delay: 290ms; }
 
 @keyframes blockIn {
   to { opacity: 1; transform: translateY(0); }
@@ -302,6 +303,17 @@ a {
   flex-shrink: 0;
 }
 
+/* the featured live demo gets a gently pulsing dot */
+.repo-lang.live::before {
+  background: var(--c2);
+  animation: livePulse 2.2s var(--ease-in-out) infinite;
+}
+@keyframes livePulse {
+  0%   { box-shadow: 0 0 0 0 rgba(64, 196, 99, 0.45); }
+  70%  { box-shadow: 0 0 0 6px rgba(64, 196, 99, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(64, 196, 99, 0); }
+}
+
 /* ── diversion: reflex game ────────────────────────────────────────────── */
 .game {
   position: relative;
@@ -488,7 +500,8 @@ body.freakout .profile-name {
   }
   #avatar.spin,
   body.freakout .game-grid, body.freakout #contrib-graph,
-  body.freakout .profile-name { animation: none; }
+  body.freakout .profile-name,
+  .repo-lang.live::before { animation: none; }
   #avatar:hover { transform: none; }
   .repo-card:hover { transform: none; }
   #contrib-graph .cell:hover { transform: scale(1.3); }

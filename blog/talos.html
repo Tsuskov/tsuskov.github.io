@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>The whole LLM stack from scratch in Rust — Tim Suskov</title>
+        <meta name="description" content="Tokenizer training, backprop by hand, Metal kernels, and it runs in your browser: building every layer of a small LLM with no ML framework." />
+        <link rel="icon" type="image/png" href="../favicon.png" />
+        <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+        <meta property="og:title" content="I built the whole LLM stack from scratch in Rust" />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content="https://tsuskov.github.io/blog/talos.html" />
+        <meta property="og:description" content="Tokenizer training, backprop by hand, Metal kernels, and it runs in your browser — no ML framework anywhere in the stack." />
+        <meta property="og:image" content="https://tsuskov.github.io/og.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <link rel="stylesheet" href="../style.css" />
+        <style>
+            /* ── article layout ─────────────────────────────────────────── */
+            .post {
+                max-width: 640px;
+                margin: 0 auto;
+                padding: 56px 20px 0;
+            }
+
+            .post-header,
+            .post-body,
+            .post-footer {
+                opacity: 0;
+                transform: translateY(10px);
+                animation: blockIn 520ms var(--ease-out) forwards;
+            }
+            .post-header { animation-delay: 40ms; }
+            .post-body   { animation-delay: 110ms; }
+            .post-footer { animation-delay: 170ms; }
+
+            .post-back {
+                display: inline-block;
+                font-size: 13px;
+                color: var(--text-muted);
+                border-bottom: 1px solid transparent;
+                transition: color 160ms var(--ease-out), border-color 160ms var(--ease-out);
+            }
+            .post-back:hover { color: var(--text); border-color: var(--border-strong); }
+
+            .post-title {
+                margin-top: 22px;
+                font-size: 29px;
+                font-weight: 650;
+                letter-spacing: -0.02em;
+                line-height: 1.22;
+            }
+
+            .post-lede {
+                margin-top: 12px;
+                font-size: 16px;
+                line-height: 1.55;
+                color: var(--text-muted);
+            }
+
+            .post-meta {
+                margin-top: 14px;
+                font-size: 12.5px;
+                color: var(--text-faint);
+                letter-spacing: 0.01em;
+            }
+
+            /* ── stat strip ─────────────────────────────────────────────── */
+            .stats {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 8px;
+                margin: 28px 0 0;
+            }
+            .stat {
+                padding: 12px 14px;
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                background: var(--surface);
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            }
+            .stat-value {
+                font-size: 17px;
+                font-weight: 650;
+                letter-spacing: -0.01em;
+                font-variant-numeric: tabular-nums;
+            }
+            .stat-label {
+                margin-top: 2px;
+                font-size: 11.5px;
+                color: var(--text-muted);
+            }
+
+            /* ── demo callout ───────────────────────────────────────────── */
+            .demo-card {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 16px;
+                margin-top: 28px;
+                padding: 15px 17px;
+                border: 1px solid var(--border);
+                border-radius: 14px;
+                background: var(--surface);
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+                transition:
+                    transform 130ms var(--ease-out),
+                    box-shadow 180ms var(--ease-out),
+                    border-color 180ms var(--ease-out);
+            }
+            @media (hover: hover) and (pointer: fine) {
+                .demo-card:hover {
+                    border-color: var(--border-strong);
+                    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.10);
+                }
+                .demo-card:hover .demo-arrow { transform: translateX(3px); }
+            }
+            .demo-card:active { transform: scale(0.98); }
+            .demo-name { font-size: 14.5px; font-weight: 600; letter-spacing: -0.01em; }
+            .demo-desc { margin-top: 3px; font-size: 12.5px; line-height: 1.45; color: var(--text-muted); }
+            .demo-arrow {
+                flex-shrink: 0;
+                color: var(--text-faint);
+                transition: transform 160ms var(--ease-out);
+            }
+
+            /* ── prose ──────────────────────────────────────────────────── */
+            .post-body { margin-top: 40px; }
+
+            .post-body h2 {
+                margin: 44px 0 0;
+                font-size: 20px;
+                font-weight: 650;
+                letter-spacing: -0.015em;
+                line-height: 1.3;
+            }
+
+            .post-body p {
+                margin: 16px 0 0;
+                font-size: 15.5px;
+                line-height: 1.65;
+            }
+
+            .post-body ul {
+                margin: 16px 0 0;
+                padding-left: 22px;
+            }
+            .post-body li {
+                margin: 8px 0 0;
+                font-size: 15.5px;
+                line-height: 1.6;
+            }
+
+            .post-body a {
+                border-bottom: 1px solid var(--border-strong);
+                padding-bottom: 1px;
+                transition: border-color 160ms var(--ease-out);
+            }
+            .post-body a:hover { border-color: var(--text); }
+
+            .post-body strong { font-weight: 600; }
+
+            code {
+                font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+                font-size: 0.88em;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 5px;
+                padding: 1px 5px;
+                white-space: nowrap;
+            }
+
+            /* the pipeline strip */
+            .pipeline {
+                margin: 20px 0 0;
+                padding: 13px 17px;
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                background: var(--surface);
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+                font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+                font-size: 13px;
+                color: var(--text-muted);
+                text-align: center;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            .pipeline b { color: var(--text); font-weight: 600; }
+
+            /* ── tables ─────────────────────────────────────────────────── */
+            .table-scroll { margin: 20px 0 0; overflow-x: auto; }
+            .post-body table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 13.5px;
+                font-variant-numeric: tabular-nums;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            }
+            .post-body th, .post-body td {
+                padding: 9px 14px;
+                text-align: left;
+                white-space: nowrap;
+            }
+            .post-body th {
+                font-size: 11.5px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                color: var(--text-muted);
+                border-bottom: 1px solid var(--border);
+            }
+            .post-body tr + tr td { border-top: 1px solid var(--border); }
+
+            /* ── footer ─────────────────────────────────────────────────── */
+            .post-footer {
+                margin-top: 52px;
+                padding: 24px 0 52px;
+                border-top: 1px solid var(--border);
+                font-size: 13px;
+                color: var(--text-muted);
+            }
+            .post-footer p { margin: 0 0 8px; }
+            .post-footer a {
+                border-bottom: 1px solid var(--border-strong);
+                padding-bottom: 1px;
+                transition: color 160ms var(--ease-out), border-color 160ms var(--ease-out);
+            }
+            .post-footer a:hover { color: var(--text); border-color: var(--text); }
+
+            @media (min-width: 600px) {
+                .post { padding-top: 88px; }
+                .post-title { font-size: 34px; }
+            }
+            @media (max-width: 480px) {
+                .stats { grid-template-columns: repeat(2, 1fr); }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                .post-header, .post-body, .post-footer {
+                    animation: none;
+                    opacity: 1;
+                    transform: none;
+                }
+                .demo-card:active { transform: none; }
+                .demo-card:hover .demo-arrow { transform: none; }
+            }
+        </style>
+    </head>
+    <body>
+        <main class="post">
+            <header class="post-header">
+                <a class="post-back" href="../">← Tim Suskov</a>
+                <h1 class="post-title">I built the whole LLM stack from scratch in Rust</h1>
+                <p class="post-lede">Tokenizer training, backprop by hand, Metal kernels — and it runs in your browser.</p>
+                <p class="post-meta">July 2026 · 10 min read</p>
+
+                <div class="stats">
+                    <div class="stat"><div class="stat-value">4</div><div class="stat-label">repos, zero ML deps</div></div>
+                    <div class="stat"><div class="stat-value">~6.8k</div><div class="stat-label">lines of Rust + Metal</div></div>
+                    <div class="stat"><div class="stat-value">17</div><div class="stat-label">days, first to last commit</div></div>
+                    <div class="stat"><div class="stat-value">3.7×</div><div class="stat-label">GPU vs CPU decode (Q4_0)</div></div>
+                </div>
+
+                <a class="demo-card" href="https://tsuskov.github.io/talos-forge">
+                    <span>
+                        <span class="demo-name">Live demo — Talos Forge</span>
+                        <span class="demo-desc" style="display:block">The model on this page was tokenized, trained, quantized and is being run entirely by code from this post — client-side, in your browser tab.</span>
+                    </span>
+                    <span class="demo-arrow">→</span>
+                </a>
+            </header>
+
+            <article class="post-body">
+                <p>I'm a high school student in Germany. Over two and a half weeks this summer I built every layer of a small LLM by hand, in Rust, with no ML framework anywhere in the stack:</p>
+
+                <ul>
+                    <li><a href="https://github.com/Tsuskov/Cadmus"><strong>Cadmus</strong></a> — a byte-level BPE tokenizer <em>trainer</em> (learning the merges, not just applying them). ~500 lines.</li>
+                    <li><a href="https://github.com/Tsuskov/Hephaistos"><strong>Hephaistos</strong></a> — a Llama-style transformer trainer with hand-written forward <em>and</em> backward passes. No autograd, no tensor library, trained on CPU. ~2.8k lines.</li>
+                    <li><a href="https://github.com/Tsuskov/talos"><strong>Talos</strong></a> — an inference engine: GGUF loader, KV cache, quantization, sampling, plus a Metal GPU backend with hand-written compute shaders. ~3.6k lines.</li>
+                    <li><a href="https://github.com/Tsuskov/talos-forge"><strong>Talos Forge</strong></a> — Talos compiled to wasm, running the trained model in the browser. That's the demo link above; the model generating text on that page went through zero external ML code on its way there.</li>
+                </ul>
+
+                <div class="pipeline">raw text → <b>Cadmus</b> → <b>Hephaistos</b> → GGUF → <b>Talos</b> → CPU · Metal · browser</div>
+
+                <p>The rule I set myself: <strong>if I can't write it and test it against a ground truth, I don't get to use it.</strong> Allowed: <code>rayon</code> for threads, <code>memmap2</code>, an RNG, JSON. Not allowed: autograd, <code>ggml</code>, <code>candle</code>, HuggingFace <code>tokenizers</code>, or any kernel I didn't write.</p>
+
+                <p>I did this because I wanted to actually understand how this stuff works — not "I read the paper," but "I can make the gradients match to eight decimal places." What follows is what each layer taught me, and the numbers.</p>
+
+                <h2>Part 1: Backprop by hand needs a truth machine (Hephaistos)</h2>
+
+                <p>A "loss goes down" curve does not prove your gradients are right. Subtly wrong gradients often still learn — just worse — and you'll never know. So before trusting a single line of backward code, I built a gradient checker: every analytic gradient is compared against an <code>f64</code> central-difference estimate. The forward and backward passes are generic over the float type, so the checker re-runs the <em>exact same code</em> in <code>f64</code> — round-off can't hide a bug behind a precision difference.</p>
+
+                <p>The model is a genuine Llama block, not a GPT-2 toy: RMSNorm, RoPE, SwiGLU, AdamW with decoupled weight decay, dropout, all biases dropped the way Llama drops them. Everything runs on flat <code>Vec&lt;f32&gt;</code> buffers. A cache-blocked matmul with an 8-lane dot product lets the compiler emit SIMD, parallelized with rayon over rows and batch — while staying <strong>bit-identical</strong> to the naive reference loop (that's a test, too).</p>
+
+                <p>The part that makes it real rather than a sandbox: the trained checkpoint exports to <strong>GGUF</strong> (RoPE weights permuted to GGUF's interleaved layout, tokenizer embedded), so the result loads in <code>llama.cpp</code> and Ollama. If your file format, weight layout, and tokenizer conventions are all correct, someone else's engine will speak your model's words. That's a much stricter test than your own code agreeing with itself.</p>
+
+                <p><strong>Reference check:</strong> a ~15.7M-param training run lands within ~1% total-corpus NLL of the same architecture trained in MLX on the same data.</p>
+
+                <h2>Part 2: The last outsourced link (Cadmus)</h2>
+
+                <p>Hephaistos originally borrowed one artifact: tokenizer <em>merges</em> learned by HuggingFace's <code>tokenizers</code> crate. Encoding and decoding were hand-written, but the training of the merge table wasn't. Cadmus closes that gap: GPT-2-style byte-level pre-tokenization (every byte maps to a printable char, so <code>decode(encode(s)) == s</code> for arbitrary UTF-8), count all adjacent symbol pairs over the corpus, fuse the most frequent, repeat until the vocab is full. The merge list's order <em>is</em> the encoder's priority table.</p>
+
+                <p>Small (~500 lines), but it means the capstone run — fresh tokenizer, fresh token stream, full training, GGUF out — touches no external ML code at any point. Bonus: on my corpus, Cadmus's merges compress ~5% better than the reference tokenizer I'd been borrowing.</p>
+
+                <h2>Part 3: Inference is a different discipline (Talos)</h2>
+
+                <p>Training taught me the math; inference taught me that the hard part is <em>conventions</em>. A GGUF reader that mmaps the file and hands out zero-copy tensor views. RoPE in the interleaved-pair convention matching the trainer's export. Grouped-query attention. A per-layer KV cache. Q8_0 and Q4_0 quantization with the dequant fused into the matvec. Temperature / top-k / top-p sampling. A teacher-forced perplexity harness, because generated samples "looking coherent" is not a metric.</p>
+
+                <p>The contract that kept it honest: <strong>Talos's logits must match Hephaistos's within 1e-4</strong> for the same model and prompt. That's a test in CI, not a vibe. Every convention mismatch — RoPE layout, norm epsilon, quantization rounding — shows up as a parity failure before it can become a mystery.</p>
+
+                <h2>Part 4: The GPU doesn't reward effort, it rewards architecture (Metal)</h2>
+
+                <p>This is the part I'm proudest of, because each step is separately measured and honest about what it did <em>not</em> buy.</p>
+
+                <p><strong>Step 1 — port the matvec to a Metal shader.</strong> One thread per output row, fused dequant for Q8_0/Q4_0 (weights stay quantized in GPU memory, decoded inside the shader byte-for-byte like the CPU path). Correct — and slow.</p>
+
+                <p><strong>Step 2 — stop re-uploading the model.</strong> The naive version shipped each weight matrix to the GPU <em>every token</em>. Keeping tensors resident (upload once, keyed by name): <strong>6.3×</strong> on a 4096×4096 matvec.</p>
+
+                <p><strong>Step 3 — a kernel that actually uses the hardware.</strong> One simdgroup per output row, lanes striding the row so reads coalesce, <code>simd_sum</code> to reduce: 0.79 ms per matvec. Honest caveat: <strong>still 1.6× slower than my multithreaded CPU path</strong>, because every matvec was its own command buffer and the commit/wait overhead ate the win.</p>
+
+                <p><strong>Step 4 — put the whole forward pass in one command buffer.</strong> Residual stream and KV cache live on the GPU; every op per token (rmsnorm, q/k/v, RoPE, attention, SwiGLU, output projection) is encoded into a single serial compute encoder; only the logits come back. The serial encoder gives memory coherence between kernels for free — race-freedom is structural, not hoped for. That amortizes the dispatch overhead, and the GPU finally wins end-to-end:</p>
+
+                <div class="table-scroll">
+                    <table>
+                        <tr><th>Decode, 64 tokens (Apple M5)</th><th>CPU (rayon)</th><th>GPU</th><th>Speedup</th></tr>
+                        <tr><td>F32</td><td>664 tok/s</td><td><strong>1843 tok/s</strong></td><td>2.8×</td></tr>
+                        <tr><td>Q4_0</td><td>617 tok/s</td><td><strong>2302 tok/s</strong></td><td><strong>3.7×</strong></td></tr>
+                    </table>
+                </div>
+
+                <p>Q4_0 wins most because decode is bandwidth-bound — fewer bytes to move. The lesson that took me the longest: the GPU didn't get faster because my kernels got cleverer, it got faster when I stopped talking to it so often.</p>
+
+                <p>Correctness under all this: every kernel is tested against its CPU twin on random inputs with a <em>relative</em> tolerance (GPU and CPU sum in different orders — bit-equality is the wrong bar); the full GPU forward matches the CPU forward to ~1e-7 over a multi-token GQA sequence; and two GPU runs must be <strong>bit-identical</strong>, because a data race would show up as nondeterminism.</p>
+
+                <h2>Part 5: The browser (wasm)</h2>
+
+                <p>Talos compiles to <code>wasm32</code>, with a fused simd128 Q4_0 dequant-dot kernel (4.6× over the scalar wasm build on Q4_0). <a href="https://tsuskov.github.io/talos-forge">Talos Forge</a> wraps it in a UI and runs the Hephaistos-trained model in a worker, client-side, no server. The wasm build is held to the same standard as everything else: same seed, same generations as the reference build.</p>
+
+                <h2>What "from scratch" bought me</h2>
+
+                <p>Concretely, things I now actually understand that I only <em>thought</em> I understood before:</p>
+
+                <ul>
+                    <li>Why gradient checking needs <code>f64</code> and central differences, and why "loss goes down" proves nothing.</li>
+                    <li>Why decode is matvec (not matmul) and therefore bandwidth-bound — and why quantization is a <em>speed</em> feature, not just a memory feature.</li>
+                    <li>That most "model doesn't work in engine X" bugs are convention bugs — RoPE layouts, tokenizer byte maps, norm epsilons — and that a 1e-4 logit-parity test catches all of them.</li>
+                    <li>That GPU programming is dominated by <em>when you talk to the GPU</em>, not what the kernels do.</li>
+                </ul>
+
+                <h2>What's next</h2>
+
+                <p>FP16 compute and a proper attention kernel to push the Metal speedup on larger models; <code>ulong</code> index math so 7B-class models fit the kernels; and training something bigger than a myth-corpus toy.</p>
+            </article>
+
+            <footer class="post-footer">
+                <p>Everything is on GitHub: <a href="https://github.com/Tsuskov/Cadmus">Cadmus</a> · <a href="https://github.com/Tsuskov/Hephaistos">Hephaistos</a> · <a href="https://github.com/Tsuskov/talos">Talos</a> · <a href="https://github.com/Tsuskov/talos-forge">Talos Forge</a>.</p>
+                <p>The names are Greek myth: Hephaistos the smith forged Talos, the bronze automaton; Cadmus brought the alphabet.</p>
+            </footer>
+        </main>
+    </body>
+</html>

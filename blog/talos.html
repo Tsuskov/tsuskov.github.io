@@ -4,7 +4,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>The whole LLM stack from scratch in Rust — Tim Suskov</title>
-        <meta name="description" content="Tokenizer training, backprop by hand, Metal kernels, and it runs in your browser: building every layer of a small LLM with no ML framework." />
+        <meta name="description" content="Tokenizer training, backprop by hand, Metal kernels, RAG from scratch, and it runs in your browser: building every layer of a small LLM with no ML framework." />
         <link rel="icon" type="image/png" href="../favicon.png" />
         <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
         <meta property="og:title" content="I built the whole LLM stack from scratch in Rust" />
@@ -254,20 +254,20 @@
             <header class="post-header">
                 <a class="post-back" href="../">← Tim Suskov</a>
                 <h1 class="post-title">I built the whole LLM stack from scratch in Rust</h1>
-                <p class="post-lede">Tokenizer training, backprop by hand, Metal kernels — and it runs in your browser.</p>
-                <p class="post-meta">July 2026 · 10 min read</p>
+                <p class="post-lede">Tokenizer training, backprop by hand, Metal kernels, RAG from scratch — and it runs in your browser.</p>
+                <p class="post-meta">July 2026 · 12 min read</p>
 
                 <div class="stats">
-                    <div class="stat"><div class="stat-value">4</div><div class="stat-label">repos, zero ML deps</div></div>
-                    <div class="stat"><div class="stat-value">~6.8k</div><div class="stat-label">lines of Rust + Metal</div></div>
-                    <div class="stat"><div class="stat-value">17</div><div class="stat-label">days, first to last commit</div></div>
+                    <div class="stat"><div class="stat-value">5</div><div class="stat-label">repos, zero ML deps</div></div>
+                    <div class="stat"><div class="stat-value">~8.3k</div><div class="stat-label">lines of Rust + Metal</div></div>
+                    <div class="stat"><div class="stat-value">20</div><div class="stat-label">days, first to last commit</div></div>
                     <div class="stat"><div class="stat-value">3.7×</div><div class="stat-label">GPU vs CPU decode (Q4_0)</div></div>
                 </div>
 
                 <a class="demo-card" href="https://tsuskov.github.io/talos-forge">
                     <span>
                         <span class="demo-name">Live demo — Talos Forge</span>
-                        <span class="demo-desc" style="display:block">The model on this page was tokenized, trained, quantized and is being run entirely by code from this post — client-side, in your browser tab.</span>
+                        <span class="demo-desc" style="display:block">The model on this page was tokenized, trained, quantized and is being run entirely by code from this post — client-side, in your browser tab. The "Mnemosyne" toggle adds from-scratch RAG on top.</span>
                     </span>
                     <span class="demo-arrow">→</span>
                 </a>
@@ -281,9 +281,10 @@
                     <li><a href="https://github.com/Tsuskov/Hephaistos"><strong>Hephaistos</strong></a> — a Llama-style transformer trainer with hand-written forward <em>and</em> backward passes. No autograd, no tensor library, trained on CPU. ~2.8k lines.</li>
                     <li><a href="https://github.com/Tsuskov/talos"><strong>Talos</strong></a> — an inference engine: GGUF loader, KV cache, quantization, sampling, plus a Metal GPU backend with hand-written compute shaders. ~3.6k lines.</li>
                     <li><a href="https://github.com/Tsuskov/talos-forge"><strong>Talos Forge</strong></a> — Talos compiled to wasm, running the trained model in the browser. That's the demo link above; the model generating text on that page went through zero external ML code on its way there.</li>
+                    <li><a href="https://github.com/Tsuskov/Mnemosyne"><strong>Mnemosyne</strong></a> — RAG on top of all of it: a contrastively fine-tuned embedding model, a vector index, and retrieval-augmented generation. Also in the browser (the "Mnemosyne" toggle in the demo). ~1.2k lines.</li>
                 </ul>
 
-                <div class="pipeline">raw text → <b>Cadmus</b> → <b>Hephaistos</b> → GGUF → <b>Talos</b> → CPU · Metal · browser</div>
+                <div class="pipeline">raw text → <b>Cadmus</b> → <b>Hephaistos</b> → GGUF → <b>Talos</b> → CPU · Metal · browser · <b>Mnemosyne</b> (RAG)</div>
 
                 <p>The rule I set myself: <strong>if I can't write it and test it against a ground truth, I don't get to use it.</strong> Allowed: <code>rayon</code> for threads, <code>memmap2</code>, an RNG, JSON. Not allowed: autograd, <code>ggml</code>, <code>candle</code>, HuggingFace <code>tokenizers</code>, or any kernel I didn't write.</p>
 
@@ -339,6 +340,29 @@
 
                 <p>Talos compiles to <code>wasm32</code>, with a fused simd128 Q4_0 dequant-dot kernel (4.6× over the scalar wasm build on Q4_0). <a href="https://tsuskov.github.io/talos-forge">Talos Forge</a> wraps it in a UI and runs the Hephaistos-trained model in a worker, client-side, no server. The wasm build is held to the same standard as everything else: same seed, same generations as the reference build.</p>
 
+                <h2>Part 6: Teaching the stack to remember (Mnemosyne)</h2>
+
+                <p>A language model's weights are its only memory, and at 15.7M params that memory is tiny — ask it "Who is Proserpina?" and it hallucinates freely. RAG fixes this by looking the answer up at generation time. I wanted the whole retrieval side from scratch too: the embedding model, its training objective, the index, the evaluation.</p>
+
+                <p><strong>Embeddings for free, then embeddings for real.</strong> A passage embedding here is the mean over positions of the final-norm hidden state — the residual stream right before the lm_head — L2-normalized. The encoder stays <em>causal</em>, because Talos's KV-cache forward is causal by construction; a bidirectional encoder would have needed a whole second inference path for marginal gain. Stage 1 uses the pretrained LM unchanged and just pools its hidden states. Stage 2 fine-tunes those weights with a contrastive objective (InfoNCE, Contriever-style: positives are two random crops of the same passage, negatives are the other pairs in the batch, symmetric loss, τ = 0.05). The gradient enters through a new backward entry point seeded directly at dL/d(hidden) — the lm_head never sees it — and the same <code>f64</code> gradient checker that verified the language-model loss verifies the whole contrastive chain.</p>
+
+                <p><strong>The numbers</strong> (retrieval over 34k overlapping 64-token chunks of the training corpus; queries are random 24-token crops; a hit = a retrieved chunk covering ≥50% of the crop):</p>
+
+                <div class="table-scroll">
+                    <table>
+                        <tr><th>Embedder</th><th>recall@1</th><th>recall@5</th></tr>
+                        <tr><td>raw LM hidden states</td><td>0.495</td><td>0.685</td></tr>
+                        <tr><td>+ 500 steps InfoNCE (~27 min CPU)</td><td><strong>0.730</strong></td><td><strong>0.870</strong></td></tr>
+                        <tr><td>Q4_0 encoder + f16 index (browser build)</td><td>0.730</td><td>0.850</td></tr>
+                    </table>
+                </div>
+
+                <p>Two things surprised me. First, the <em>raw</em> language model is already a passable embedding space — 0.495 recall@1 comes free with next-token pretraining. Second, how cheap the upgrade is: 27 minutes of contrastive tuning buys +47% relative recall@1, and quantizing the encoder to Q4_0 with an f16 index costs almost nothing. Honesty footnote: on this eval a plain token-overlap baseline scores 0.995 — verbatim crops are trivially findable by exact matching. That row is a ceiling by construction; embeddings have to win on paraphrase, and qualitatively they do ("Proserpina carried off by Pluto" retrieves the abduction story without sharing its words; the raw LM returned two off-topic passages for the same query).</p>
+
+                <p><strong>In the browser</strong>, the encoder (8.5 MB) plus index (32 MB) load behind a toggle, retrieval over all 34k passages takes ~50 ms in wasm, and the packed prompt — passages plus your question — is displayed verbatim as the prompt echo, so you see exactly what the model reads. The generation is still 15.7M-grade prose; the point the demo makes is visible steering: same seed with the toggle off is myth soup, with it on the model continues the retrieved scene, characters and all.</p>
+
+                <p>War story from the index build: encoding a 4.8 MB corpus hung forever, because my BPE encode ran the merge loop over the whole input as one unit — O(n²), invisible on prompts, fatal on files. The fix (pre-tokenize per word, like the trainer does) is a few lines, and for vocabs trained with the same splitter the token stream is provably identical — the retrieval eval reproduced bit-exact afterwards, which is the kind of regression test this project keeps handing me for free.</p>
+
                 <h2>What "from scratch" bought me</h2>
 
                 <p>Concretely, things I now actually understand that I only <em>thought</em> I understood before:</p>
@@ -348,6 +372,7 @@
                     <li>Why decode is matvec (not matmul) and therefore bandwidth-bound — and why quantization is a <em>speed</em> feature, not just a memory feature.</li>
                     <li>That most "model doesn't work in engine X" bugs are convention bugs — RoPE layouts, tokenizer byte maps, norm epsilons — and that a 1e-4 logit-parity test catches all of them.</li>
                     <li>That GPU programming is dominated by <em>when you talk to the GPU</em>, not what the kernels do.</li>
+                    <li>That a pretrained LM's hidden states are already a usable embedding space, and a contrastive objective is less "new model" than "reshaping geometry you already have."</li>
                 </ul>
 
                 <h2>What's next</h2>
@@ -356,8 +381,8 @@
             </article>
 
             <footer class="post-footer">
-                <p>Everything is on GitHub: <a href="https://github.com/Tsuskov/Cadmus">Cadmus</a> · <a href="https://github.com/Tsuskov/Hephaistos">Hephaistos</a> · <a href="https://github.com/Tsuskov/talos">Talos</a> · <a href="https://github.com/Tsuskov/talos-forge">Talos Forge</a>.</p>
-                <p>The names are Greek myth: Hephaistos the smith forged Talos, the bronze automaton; Cadmus brought the alphabet.</p>
+                <p>Everything is on GitHub: <a href="https://github.com/Tsuskov/Cadmus">Cadmus</a> · <a href="https://github.com/Tsuskov/Hephaistos">Hephaistos</a> · <a href="https://github.com/Tsuskov/talos">Talos</a> · <a href="https://github.com/Tsuskov/talos-forge">Talos Forge</a> · <a href="https://github.com/Tsuskov/Mnemosyne">Mnemosyne</a>.</p>
+                <p>The names are Greek myth: Hephaistos the smith forged Talos, the bronze automaton; Cadmus brought the alphabet; Mnemosyne is the Titaness of memory.</p>
             </footer>
         </main>
     </body>

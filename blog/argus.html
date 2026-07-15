@@ -4,13 +4,13 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>A flight recorder for AI agents — Tim Suskov</title>
-        <meta name="description" content="Argus runs any AI agent and shows you, live, every file it reads or writes, every process it spawns, every network connection — with red flags on ~/.ssh, .env and friends. One binary, no kernel extension." />
+        <meta name="description" content="Argus runs any AI agent and shows you, live, everything it touches. I ran a real Claude Code session under it: 299 files read, 61 processes, 2 hosts — and 3 keychain reads I had never seen." />
         <link rel="icon" type="image/png" href="../favicon.png" />
         <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
         <meta property="og:title" content="I gave AI agents a flight recorder" />
         <meta property="og:type" content="article" />
         <meta property="og:url" content="https://tsuskov.github.io/blog/argus.html" />
-        <meta property="og:description" content="Everything your agent touches on your Mac — every file, process, and connection, live, with red flags on sensitive paths. One binary, no kernel extension." />
+        <meta property="og:description" content="Everything your agent touches on your Mac, live. A real Claude Code session: 299 files read, 61 processes, 2 hosts — and 3 keychain reads I had never seen." />
         <meta property="og:image" content="https://tsuskov.github.io/og.png" />
         <meta name="twitter:card" content="summary_large_image" />
         <link rel="stylesheet" href="../style.css" />
@@ -264,14 +264,14 @@
             <header class="post-header">
                 <a class="post-back" href="../">← Tim Suskov</a>
                 <h1 class="post-title">I gave AI agents a flight recorder</h1>
-                <p class="post-lede">Argus runs any agent and shows you, live, everything it touches on your Mac — every file, every process, every network connection, with red flags on the paths that matter. One binary, no kernel extension.</p>
-                <p class="post-meta">July 2026 · 6 min read</p>
+                <p class="post-lede">Argus runs any agent and shows you, live, everything it touches on your Mac — every file, every process, every network connection, with red flags on the paths that matter. Then I ran a real Claude Code session under it.</p>
+                <p class="post-meta">July 2026 · 7 min read</p>
 
                 <div class="stats">
-                    <div class="stat"><div class="stat-value">2.9s</div><div class="stat-label">for a rogue script to grab a key &amp; phone home</div></div>
-                    <div class="stat"><div class="stat-value">3</div><div class="stat-label">sensitive paths flagged red, live</div></div>
+                    <div class="stat"><div class="stat-value">299</div><div class="stat-label">files read by one 2-min Claude Code task</div></div>
+                    <div class="stat"><div class="stat-value">3</div><div class="stat-label">keychain paths it touched — flagged red</div></div>
+                    <div class="stat"><div class="stat-value">61</div><div class="stat-label">processes in its tree</div></div>
                     <div class="stat"><div class="stat-value">0</div><div class="stat-label">kernel extensions or entitlements</div></div>
-                    <div class="stat"><div class="stat-value">~1.2k</div><div class="stat-label">lines of Rust</div></div>
                 </div>
 
                 <a class="demo-card" href="https://github.com/Tsuskov/argus">
@@ -296,6 +296,27 @@
 
                 <p><code>argus -- &lt;agent command&gt;</code> starts your agent and streams every file read and write, every spawned process, every deletion and rename, and every network connection — live, filtered to that agent's process tree, so you see the agent and nothing else. Touches on sensitive paths (<code>~/.ssh</code>, <code>~/.aws</code>, <code>~/.gnupg</code>, keychains, browser cookies, <code>.env</code> files, <code>.netrc</code>, GitHub CLI credentials, your Messages database) are flagged red the moment they happen. On a terminal you get a TUI with a by-directory view; in a pipe you get lines, or JSON with <code>--json</code>. Every session ends with a report: <code>argus-report.md</code> for you, <code>argus-report.json</code> for your tooling.</p>
 
+                <h2>Two minutes of Claude Code, measured</h2>
+
+                <p>I gave Claude Code a small, ordinary task in one of my Rust repos — read the codebase, run the tests, explain the architecture — and ran it under Argus. 110 seconds, headless. The unedited summary:</p>
+
+                <div class="term"><b>argus: 299 files read · 36 written · 18 deleted · 61 processes executed · 2 hosts contacted</b>
+argus: <span class="flag">⚠ 3 sensitive paths touched</span>
+  <span class="flag">⚠ /Library/Keychains/System.keychain</span>
+  <span class="flag">⚠ /System/Library/Keychains/SystemTrustSettings.plist</span>
+  <span class="flag">⚠ /Users/…/Library/Keychains/login.keychain-db</span></div>
+
+                <p>Four things I did not know before I watched:</p>
+
+                <ul>
+                    <li><strong>It reads my login keychain.</strong> Twice in the session, <code>/usr/bin/security</code> pops up in the process tree and opens <code>login.keychain-db</code>. Almost certainly legitimate — that's where Claude Code keeps its credentials — but I had never <em>seen</em> it happen, and a red line in a live stream is a very different experience from a paragraph in a docs page. That's the point of the flags: not "gotcha", but <em>now you know what normal looks like</em>.</li>
+                    <li><strong>Half its process tree is my own dotfiles.</strong> The agent spawns login shells, so my <code>.zshrc</code> runs inside its tree: starship draws a prompt nobody sees, my WakaTime plugin logs the session, <code>lsd</code> aliases fire. Of the 61 processes, a good chunk is my own prompt bling — which also means every tool <em>you've</em> ever piled into your shellrc runs with every agent command.</li>
+                    <li><strong>The engineering is visibly careful.</strong> Config updates go through a lock file plus atomic <code>tmp → rename</code>, session transcripts append after every message, an old backup gets pruned, and all 18 deletions of the session are its own temp files. A well-behaved agent under the microscope looks <em>reassuring</em> — that's worth knowing too, because it gives you a baseline for the day something doesn't.</li>
+                    <li><strong>Exactly two hosts.</strong> One Anthropic API address and one Google-fronted endpoint (telemetry, by the looks of it). Honest caveat from the <a href="#how-it-works">limitations</a>: v0.1 polls connections, so a very short-lived request could have slipped past — the v0.2 proxy funnel will make this list provably complete.</li>
+                </ul>
+
+                <p>None of this is a scandal — it's the opposite. It's what your agent does every single session, invisible until you point a flight recorder at it. The interesting question is what the <em>other</em> tools in your stack look like under the same lens.</p>
+
                 <h2>Watching a malicious agent work</h2>
 
                 <p>The repo ships with a decoy — a six-step "malicious agent" that does what a compromised tool would do: read an SSH private key, read a <code>.env</code>, spawn children that write files, rename, delete, and phone home. It's also the test fixture; every Argus milestone had to catch all of it before it counted as done. Here's the actual session report, unedited:</p>
@@ -310,7 +331,7 @@ argus: <span class="flag">⚠ 3 sensitive paths touched</span>
 
                 <p>The unedited detail is my favorite part. A six-line shell script "reads 35 files"? Yes — and the report shows they're real: <code>curl</code> pulls in <code>/etc/ssl/cert.pem</code> and <code>openssl.cnf</code>, the shell walks locale files, something consults the timezone database. Nothing is summarized or guessed; if a process in the tree opened it, it's in the list. The <em>signal</em> lives in the red lines on top.</p>
 
-                <h2>How it works (and the trick that makes it installable)</h2>
+                <h2 id="how-it-works">How it works (and the trick that makes it installable)</h2>
 
                 <p>macOS has a beautiful audit API — Endpoint Security — and a catch: consuming it normally requires a signed system extension with an Apple-granted entitlement. That's why most tools in this space are either commercial EDR or a kernel-adjacent science project.</p>
 

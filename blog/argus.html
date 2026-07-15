@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A flight recorder for AI agents — Tim Suskov</title>
+        <meta name="description" content="Argus runs any AI agent and shows you, live, every file it reads or writes, every process it spawns, every network connection — with red flags on ~/.ssh, .env and friends. One binary, no kernel extension." />
+        <link rel="icon" type="image/png" href="../favicon.png" />
+        <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+        <meta property="og:title" content="I gave AI agents a flight recorder" />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content="https://tsuskov.github.io/blog/argus.html" />
+        <meta property="og:description" content="Everything your agent touches on your Mac — every file, process, and connection, live, with red flags on sensitive paths. One binary, no kernel extension." />
+        <meta property="og:image" content="https://tsuskov.github.io/og.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <link rel="stylesheet" href="../style.css" />
+        <style>
+            /* ── article layout ─────────────────────────────────────────── */
+            .post {
+                max-width: 640px;
+                margin: 0 auto;
+                padding: 56px 20px 0;
+            }
+
+            .post-header,
+            .post-body,
+            .post-footer {
+                opacity: 0;
+                transform: translateY(10px);
+                animation: blockIn 520ms var(--ease-out) forwards;
+            }
+            .post-header { animation-delay: 40ms; }
+            .post-body   { animation-delay: 110ms; }
+            .post-footer { animation-delay: 170ms; }
+
+            .post-back {
+                display: inline-block;
+                font-size: 13px;
+                color: var(--text-muted);
+                border-bottom: 1px solid transparent;
+                transition: color 160ms var(--ease-out), border-color 160ms var(--ease-out);
+            }
+            .post-back:hover { color: var(--text); border-color: var(--border-strong); }
+
+            .post-title {
+                margin-top: 22px;
+                font-size: 29px;
+                font-weight: 650;
+                letter-spacing: -0.02em;
+                line-height: 1.22;
+            }
+
+            .post-lede {
+                margin-top: 12px;
+                font-size: 16px;
+                line-height: 1.55;
+                color: var(--text-muted);
+            }
+
+            .post-meta {
+                margin-top: 14px;
+                font-size: 12.5px;
+                color: var(--text-faint);
+                letter-spacing: 0.01em;
+            }
+
+            /* ── stat strip ─────────────────────────────────────────────── */
+            .stats {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 8px;
+                margin: 28px 0 0;
+            }
+            .stat {
+                padding: 12px 14px;
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                background: var(--surface);
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            }
+            .stat-value {
+                font-size: 17px;
+                font-weight: 650;
+                letter-spacing: -0.01em;
+                font-variant-numeric: tabular-nums;
+            }
+            .stat-label {
+                margin-top: 2px;
+                font-size: 11.5px;
+                color: var(--text-muted);
+            }
+
+            /* ── demo callout ───────────────────────────────────────────── */
+            .demo-card {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 16px;
+                margin-top: 28px;
+                padding: 15px 17px;
+                border: 1px solid var(--border);
+                border-radius: 14px;
+                background: var(--surface);
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+                transition:
+                    transform 130ms var(--ease-out),
+                    box-shadow 180ms var(--ease-out),
+                    border-color 180ms var(--ease-out);
+            }
+            @media (hover: hover) and (pointer: fine) {
+                .demo-card:hover {
+                    border-color: var(--border-strong);
+                    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.10);
+                }
+                .demo-card:hover .demo-arrow { transform: translateX(3px); }
+            }
+            .demo-card:active { transform: scale(0.98); }
+            .demo-name { font-size: 14.5px; font-weight: 600; letter-spacing: -0.01em; }
+            .demo-desc { margin-top: 3px; font-size: 12.5px; line-height: 1.45; color: var(--text-muted); }
+            .demo-arrow {
+                flex-shrink: 0;
+                color: var(--text-faint);
+                transition: transform 160ms var(--ease-out);
+            }
+
+            /* ── prose ──────────────────────────────────────────────────── */
+            .post-body { margin-top: 40px; }
+
+            .post-body h2 {
+                margin: 44px 0 0;
+                font-size: 20px;
+                font-weight: 650;
+                letter-spacing: -0.015em;
+                line-height: 1.3;
+            }
+
+            .post-body p {
+                margin: 16px 0 0;
+                font-size: 15.5px;
+                line-height: 1.65;
+            }
+
+            .post-body ul {
+                margin: 16px 0 0;
+                padding-left: 22px;
+            }
+            .post-body li {
+                margin: 8px 0 0;
+                font-size: 15.5px;
+                line-height: 1.6;
+            }
+
+            .post-body a {
+                border-bottom: 1px solid var(--border-strong);
+                padding-bottom: 1px;
+                transition: border-color 160ms var(--ease-out);
+            }
+            .post-body a:hover { border-color: var(--text); }
+
+            .post-body strong { font-weight: 600; }
+
+            .post-body img {
+                display: block;
+                max-width: 100%;
+                margin: 24px 0 0;
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            }
+
+            code {
+                font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+                font-size: 0.88em;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 5px;
+                padding: 1px 5px;
+                white-space: nowrap;
+            }
+
+            /* terminal-ish excerpt block */
+            .term {
+                margin: 20px 0 0;
+                padding: 14px 17px;
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                background: var(--surface);
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+                font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+                font-size: 12.5px;
+                line-height: 1.7;
+                color: var(--text-muted);
+                overflow-x: auto;
+                white-space: pre;
+            }
+            .term b { color: var(--text); font-weight: 600; }
+            .term .flag { color: #d64545; font-weight: 600; }
+
+            /* ── tables ─────────────────────────────────────────────────── */
+            .table-scroll { margin: 20px 0 0; overflow-x: auto; }
+            .post-body table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 13.5px;
+                font-variant-numeric: tabular-nums;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            }
+            .post-body th, .post-body td {
+                padding: 9px 14px;
+                text-align: left;
+                white-space: nowrap;
+            }
+            .post-body th {
+                font-size: 11.5px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                color: var(--text-muted);
+                border-bottom: 1px solid var(--border);
+            }
+            .post-body tr + tr td { border-top: 1px solid var(--border); }
+
+            /* ── footer ─────────────────────────────────────────────────── */
+            .post-footer {
+                margin-top: 52px;
+                padding: 24px 0 52px;
+                border-top: 1px solid var(--border);
+                font-size: 13px;
+                color: var(--text-muted);
+            }
+            .post-footer p { margin: 0 0 8px; }
+            .post-footer a {
+                border-bottom: 1px solid var(--border-strong);
+                padding-bottom: 1px;
+                transition: color 160ms var(--ease-out), border-color 160ms var(--ease-out);
+            }
+            .post-footer a:hover { color: var(--text); border-color: var(--text); }
+
+            @media (min-width: 600px) {
+                .post { padding-top: 88px; }
+                .post-title { font-size: 34px; }
+            }
+            @media (max-width: 480px) {
+                .stats { grid-template-columns: repeat(2, 1fr); }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                .post-header, .post-body, .post-footer {
+                    animation: none;
+                    opacity: 1;
+                    transform: none;
+                }
+                .demo-card:active { transform: none; }
+                .demo-card:hover .demo-arrow { transform: none; }
+            }
+        </style>
+    </head>
+    <body>
+        <main class="post">
+            <header class="post-header">
+                <a class="post-back" href="../">← Tim Suskov</a>
+                <h1 class="post-title">I gave AI agents a flight recorder</h1>
+                <p class="post-lede">Argus runs any agent and shows you, live, everything it touches on your Mac — every file, every process, every network connection, with red flags on the paths that matter. One binary, no kernel extension.</p>
+                <p class="post-meta">July 2026 · 6 min read</p>
+
+                <div class="stats">
+                    <div class="stat"><div class="stat-value">2.9s</div><div class="stat-label">for a rogue script to grab a key &amp; phone home</div></div>
+                    <div class="stat"><div class="stat-value">3</div><div class="stat-label">sensitive paths flagged red, live</div></div>
+                    <div class="stat"><div class="stat-value">0</div><div class="stat-label">kernel extensions or entitlements</div></div>
+                    <div class="stat"><div class="stat-value">~1.2k</div><div class="stat-label">lines of Rust</div></div>
+                </div>
+
+                <a class="demo-card" href="https://github.com/Tsuskov/argus">
+                    <span>
+                        <span class="demo-name">Argus on GitHub</span>
+                        <span class="demo-desc" style="display:block"><code>brew install tsuskov/tap/argus</code> — then run any agent under it: <code>argus -- &lt;agent command&gt;</code>. MIT, macOS.</span>
+                    </span>
+                    <span class="demo-arrow">→</span>
+                </a>
+            </header>
+
+            <article class="post-body">
+                <p>We've all normalized something strange: we download agents and MCP servers off the internet and hand them a shell. They run as <em>you</em>. Everything you can read — your SSH keys, your browser cookies, every <code>.env</code> you ever scattered across your projects — they can read. And if you ask yourself what an agent <em>actually did</em> during that twenty-minute session, the honest answer is: you scrolled past it.</p>
+
+                <p>This isn't hypothetical anymore. Last year someone backdoored <code>postmark-mcp</code>, an npm MCP server, to quietly BCC outgoing mail to an attacker's domain; security scans of public MCP servers keep finding a scary fraction with critical issues. The response so far is mostly "review the code" (nobody does) or "run it in a VM" (nobody does that either).</p>
+
+                <p>So I built the thing I actually wanted: a flight recorder. Not a sandbox, not a firewall — first, just the truth about what happened.</p>
+
+                <img src="argus-demo.gif" alt="argus running a malicious decoy agent: a live event stream, red SENSITIVE flags on ~/.ssh and .env, then a session summary" width="1100" />
+
+                <h2>What Argus does</h2>
+
+                <p><code>argus -- &lt;agent command&gt;</code> starts your agent and streams every file read and write, every spawned process, every deletion and rename, and every network connection — live, filtered to that agent's process tree, so you see the agent and nothing else. Touches on sensitive paths (<code>~/.ssh</code>, <code>~/.aws</code>, <code>~/.gnupg</code>, keychains, browser cookies, <code>.env</code> files, <code>.netrc</code>, GitHub CLI credentials, your Messages database) are flagged red the moment they happen. On a terminal you get a TUI with a by-directory view; in a pipe you get lines, or JSON with <code>--json</code>. Every session ends with a report: <code>argus-report.md</code> for you, <code>argus-report.json</code> for your tooling.</p>
+
+                <h2>Watching a malicious agent work</h2>
+
+                <p>The repo ships with a decoy — a six-step "malicious agent" that does what a compromised tool would do: read an SSH private key, read a <code>.env</code>, spawn children that write files, rename, delete, and phone home. It's also the test fixture; every Argus milestone had to catch all of it before it counted as done. Here's the actual session report, unedited:</p>
+
+                <div class="term"><b>argus: 35 files read · 8 written · 6 deleted · 13 processes executed · 1 host contacted</b>
+argus: <span class="flag">⚠ 3 sensitive paths touched</span>
+  <span class="flag">⚠ …/fake_home/.env</span>
+  <span class="flag">⚠ …/fake_home/.ssh</span>
+  <span class="flag">⚠ …/fake_home/.ssh/id_ed25519</span></div>
+
+                <p>Total runtime: <strong>2.9 seconds</strong>. That's how long a rogue dependency needs to take your key and exfiltrate it — and exactly the kind of thing that's invisible in a wall of agent output and obvious in a red line.</p>
+
+                <p>The unedited detail is my favorite part. A six-line shell script "reads 35 files"? Yes — and the report shows they're real: <code>curl</code> pulls in <code>/etc/ssl/cert.pem</code> and <code>openssl.cnf</code>, the shell walks locale files, something consults the timezone database. Nothing is summarized or guessed; if a process in the tree opened it, it's in the list. The <em>signal</em> lives in the red lines on top.</p>
+
+                <h2>How it works (and the trick that makes it installable)</h2>
+
+                <p>macOS has a beautiful audit API — Endpoint Security — and a catch: consuming it normally requires a signed system extension with an Apple-granted entitlement. That's why most tools in this space are either commercial EDR or a kernel-adjacent science project.</p>
+
+                <p>The trick: since macOS 13, Apple ships <code>/usr/bin/eslogger</code> — their own signed ES client that prints events as JSON. Argus subscribes to eight event types (<code>exec</code>, <code>fork</code>, <code>exit</code>, <code>open</code>, <code>create</code>, <code>write</code>, <code>unlink</code>, <code>rename</code>) through it, follows <code>fork</code>/<code>exec</code> to maintain the agent's pid tree, and drops everything outside the tree. No kext, no entitlement, no third-party daemon — the privileged component is Apple's own binary. The cost is honest friction: eslogger needs <code>sudo</code> and Full Disk Access, once.</p>
+
+                <p>Two details I care about:</p>
+
+                <ul>
+                    <li><strong>Nothing escapes at startup.</strong> The agent launches behind a stop-gate — a tiny <code>sh</code> trampoline that stops itself and only <code>exec</code>s your command once the event subscription is confirmed live. An agent can't sneak a read into the first milliseconds.</li>
+                    <li><strong>Network, honestly.</strong> Endpoint Security has no TCP events at all (I checked all 104 event types), so v0.1 polls <code>lsof</code> over the pid tree every 500ms. That catches real sessions fine — but a sub-500ms connection can slip through, and the README says so instead of pretending otherwise. The proper fix is v0.2's proxy funnel (below).</li>
+                </ul>
+
+                <p>War story, because these are the fun part: my first stop-gate raised <code>SIGSTOP</code> in <code>pre_exec</code>, between fork and exec. Every single run deadlocked — <code>Command::spawn</code> in Rust blocks on a pipe until the child execs, and my child had stopped itself right before doing that. The parent waited for the exec, the child waited for a <code>SIGCONT</code> the parent would never send. A <code>sample</code> of the hung process made it obvious in one stack trace. Moving the stop <em>after</em> the exec (stop yourself, then <code>exec "$@"</code> on continue — same pid throughout) fixed it, and <code>waitpid(WUNTRACED)</code> now confirms the stop before the run proceeds, so the race can't come back.</p>
+
+                <h2>What it's not (yet)</h2>
+
+                <p>v0.1 observes; it doesn't block. That's a deliberate first release: a recorder you actually run beats a policy engine you don't. v0.2 is the enforcement half, and the design is already fixed:</p>
+
+                <ul>
+                    <li><code>argus --policy policy.toml -- &lt;agent&gt;</code> compiles your rules to a Seatbelt profile — the same sandbox mechanism agent vendors themselves use — so denials are enforced by the kernel, not by string-matching an event stream after the fact.</li>
+                    <li>The sandbox allows outbound traffic <em>only</em> to Argus's local proxy, which logs and enforces a host allowlist. That closes the lsof polling gap for good: a connection either goes through the funnel or doesn't happen.</li>
+                    <li>Denials show up in the TUI as red <code>BLOCKED</code> lines.</li>
+                </ul>
+
+                <h2>Try it</h2>
+
+                <p><code>brew install tsuskov/tap/argus</code>, or build from <a href="https://github.com/Tsuskov/argus">source</a> — it's ~1.2k lines of Rust, small enough to read in an evening, MIT-licensed. Run the decoy (<code>argus -- sh tests/decoy-agent.sh</code>) to see the red flags, then run it on your actual agent and read the report. I'd genuinely like to hear what your agents turn out to be doing — that's the whole point of a flight recorder.</p>
+            </article>
+
+            <footer class="post-footer">
+                <p>Code: <a href="https://github.com/Tsuskov/argus">github.com/Tsuskov/argus</a>. Previously: <a href="talos.html">the whole LLM stack from scratch in Rust</a>.</p>
+                <p>Argus Panoptes is the hundred-eyed watchman of Greek myth — the giant Hera set to guard what mattered, because no matter how many of his eyes slept, some were always open.</p>
+            </footer>
+        </main>
+    </body>
+</html>

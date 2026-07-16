@@ -13,6 +13,9 @@
   --accent: #18181b;
   --hover: #f4f4f5;
 
+  /* Mistral-style pixel orange */
+  --pixel-orange: #ff8205;
+
   /* contribution scale */
   --c0: #ebedf0;
   --c1: #9be9a8;
@@ -63,6 +66,7 @@ a {
 .section:nth-of-type(4) { animation-delay: 290ms; }
 .section:nth-of-type(5) { animation-delay: 350ms; }
 .section:nth-of-type(6) { animation-delay: 410ms; }
+.section:nth-of-type(7) { animation-delay: 470ms; }
 
 @keyframes blockIn {
   to { opacity: 1; transform: translateY(0); }
@@ -355,6 +359,70 @@ a.song:hover {
   color: var(--text-faint);
 }
 
+/* ── favorites: the nerd canon, in pixels ──────────────────────────────── */
+.fav-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.fav-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 15px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: border-color 180ms var(--ease-out), box-shadow 180ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .fav-card:hover {
+    border-color: var(--border-strong);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+  }
+}
+
+/* tiny 16×16 canvases blown up into chunky pixels */
+.fav-viz {
+  width: 64px;
+  height: 64px;
+  padding: 6px;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.fav-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.fav-kicker {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--pixel-orange);
+}
+
+.fav-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.fav-desc {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
 /* ── diversion: reflex game ────────────────────────────────────────────── */
 .game {
   position: relative;
@@ -530,6 +598,7 @@ body.freakout .profile-name {
   .container { padding-top: 88px; gap: 64px; }
   #avatar { width: 120px; height: 120px; }
   .profile-name { font-size: 38px; }
+  .fav-grid { grid-template-columns: 1fr 1fr; }
 }
 
 /* ── reduced motion: keep fades, drop movement ─────────────────────────── */

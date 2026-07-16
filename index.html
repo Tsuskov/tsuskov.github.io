@@ -13,7 +13,7 @@
         <meta property="og:description" content="Developer in Berlin. Profile, contributions and projects, under x-ray." />
         <meta property="og:image" content="https://tsuskov.github.io/og.png" />
         <meta name="twitter:card" content="summary_large_image" />
-        <link rel="stylesheet" href="style.css?v=4" />
+        <link rel="stylesheet" href="style.css?v=5" />
     </head>
     <body>
         <main class="container">
@@ -25,15 +25,24 @@
                     <a href="https://github.com/tsuskov">github.com/tsuskov</a>
                 </p>
                 <p class="profile-stats" id="profile-stats"></p>
+                <nav class="profile-nav">
+                    <a href="#contributions">contributions</a>
+                    <a href="#featured">featured</a>
+                    <a href="#repos">repos</a>
+                    <a href="#writing">writing</a>
+                    <a href="#songs">songs</a>
+                    <a href="#favorites">favorites</a>
+                    <a href="#play">play</a>
+                </nav>
             </header>
 
-            <section class="section">
+            <section class="section" id="contributions">
                 <h2 class="section-title">Contributions</h2>
                 <p class="section-sub" id="contrib-total"></p>
                 <div id="contrib-graph"></div>
             </section>
 
-            <section class="section">
+            <section class="section" id="featured">
                 <h2 class="section-title">Featured</h2>
                 <a class="repo-card" href="https://tsuskov.github.io/talos-forge/">
                     <span class="repo-main">
@@ -49,12 +58,12 @@
                 </a>
             </section>
 
-            <section class="section">
+            <section class="section" id="repos">
                 <h2 class="section-title">Repositories</h2>
                 <div id="repo-list"></div>
             </section>
 
-            <section class="section">
+            <section class="section" id="writing">
                 <h2 class="section-title">Writing</h2>
                 <a class="repo-card" href="blog/argus.html">
                     <span class="repo-main">
@@ -72,7 +81,7 @@
                 </a>
             </section>
 
-            <section class="section">
+            <section class="section" id="songs">
                 <h2 class="section-title">Songs</h2>
                 <p class="section-sub">On repeat lately.</p>
                 <div class="song-list" id="song-list">
@@ -82,110 +91,66 @@
                 </div>
             </section>
 
-            <section class="section">
+            <section class="section" id="favorites">
                 <h2 class="section-title">Favorites</h2>
                 <p class="section-sub">The nerd canon — algorithms, particles, heroes. In pixels.</p>
                 <div class="fav-grid">
-                    <div class="fav-card">
-                        <canvas class="fav-viz" data-viz="backprop" width="16" height="16"></canvas>
-                        <span class="fav-main">
-                            <span class="fav-kicker">algorithm</span>
-                            <span class="fav-name">Backpropagation</span>
-                            <span class="fav-desc">The chain rule, industrialized. Hand-rolled in Hephaistos.</span>
-                        </span>
-                    </div>
-                    <div class="fav-card">
-                        <canvas class="fav-viz" data-viz="dijkstra" width="16" height="16"></canvas>
-                        <span class="fav-main">
-                            <span class="fav-kicker">algorithm</span>
-                            <span class="fav-name">Dijkstra</span>
-                            <span class="fav-desc">Greedy, and provably right about it.</span>
-                        </span>
-                    </div>
-                    <div class="fav-card">
-                        <canvas class="fav-viz" data-viz="graph" width="16" height="16"></canvas>
-                        <span class="fav-main">
-                            <span class="fav-kicker">data structure</span>
-                            <span class="fav-name">Graph</span>
-                            <span class="fav-desc">Everything is one, if you squint hard enough.</span>
-                        </span>
-                    </div>
-                    <div class="fav-card">
-                        <canvas class="fav-viz" data-viz="higgs" width="16" height="16"></canvas>
-                        <span class="fav-main">
-                            <span class="fav-kicker">boson</span>
-                            <span class="fav-name">Higgs boson</span>
-                            <span class="fav-desc">The reason anything weighs anything at all.</span>
-                        </span>
-                    </div>
-                    <div class="fav-card">
-                        <canvas class="fav-viz" data-viz="gluon" width="16" height="16"></canvas>
-                        <span class="fav-main">
-                            <span class="fav-kicker">boson</span>
-                            <span class="fav-name">Gluon</span>
-                            <span class="fav-desc">Holds quarks together and never shows up alone.</span>
-                        </span>
-                    </div>
-                    <div class="fav-card">
-                        <canvas class="fav-viz" data-viz="neutrino" width="16" height="16"></canvas>
-                        <span class="fav-main">
-                            <span class="fav-kicker">fermion</span>
-                            <span class="fav-name">Electron neutrino</span>
-                            <span class="fav-desc">Trillions pass through you every second. None of them care.</span>
-                        </span>
-                    </div>
-                    <div class="fav-card">
-                        <canvas class="fav-viz" data-viz="titanium" width="16" height="16"></canvas>
-                        <span class="fav-main">
-                            <span class="fav-kicker">element</span>
-                            <span class="fav-name">Titanium</span>
-                            <span class="fav-desc">Ti · 22 — light, strong, refuses to rust.</span>
-                        </span>
-                    </div>
-                    <div class="fav-card">
-                        <canvas class="fav-viz" data-viz="planck" width="16" height="16"></canvas>
-                        <span class="fav-main">
-                            <span class="fav-kicker">constant</span>
-                            <span class="fav-name">Planck constant</span>
-                            <span class="fav-desc">h = 6.626×10⁻³⁴ J·s. The universe's pixel size.</span>
-                        </span>
-                    </div>
-                    <div class="fav-card">
-                        <canvas class="fav-viz" data-viz="emirp" width="16" height="16"></canvas>
-                        <span class="fav-main">
-                            <span class="fav-kicker">number</span>
-                            <span class="fav-name">73 &amp; 37</span>
-                            <span class="fav-desc">Mirror primes — the 21st and the 12th. And 1001001 reads the same backwards.</span>
-                        </span>
-                    </div>
-                    <div class="fav-card">
-                        <canvas class="fav-viz" data-viz="euler" width="16" height="16"></canvas>
-                        <span class="fav-main">
-                            <span class="fav-kicker">hero</span>
-                            <span class="fav-name">Leonhard Euler</span>
-                            <span class="fav-desc">e<sup>iπ</sup> + 1 = 0. Case closed.</span>
-                        </span>
-                    </div>
-                    <div class="fav-card">
-                        <canvas class="fav-viz" data-viz="gauss" width="16" height="16"></canvas>
-                        <span class="fav-main">
-                            <span class="fav-kicker">hero</span>
-                            <span class="fav-name">Carl Friedrich Gauß</span>
-                            <span class="fav-desc">Summed 1–100 at seven and never slowed down.</span>
-                        </span>
-                    </div>
-                    <div class="fav-card">
-                        <canvas class="fav-viz" data-viz="batman" width="16" height="16"></canvas>
-                        <span class="fav-main">
-                            <span class="fav-kicker">hero</span>
-                            <span class="fav-name">Batman</span>
-                            <span class="fav-desc">No superpowers. Just preparation.</span>
-                        </span>
-                    </div>
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="backprop" data-kicker="algorithm" data-name="Backpropagation" data-desc="The chain rule, industrialized. Hand-rolled in Hephaistos.">
+                        <canvas class="fav-viz" width="16" height="16"></canvas>
+                        <span class="fav-tile-label">Backprop</span>
+                    </button>
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="astar" data-kicker="algorithm" data-name="A*" data-desc="Dijkstra, but it knows where it's going.">
+                        <canvas class="fav-viz" width="16" height="16"></canvas>
+                        <span class="fav-tile-label">A*</span>
+                    </button>
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="graph" data-kicker="data structure" data-name="Graph" data-desc="Everything is one, if you squint hard enough.">
+                        <canvas class="fav-viz" width="16" height="16"></canvas>
+                        <span class="fav-tile-label">Graph</span>
+                    </button>
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="higgs" data-kicker="boson" data-name="Higgs boson" data-desc="The reason anything weighs anything at all.">
+                        <canvas class="fav-viz" width="16" height="16"></canvas>
+                        <span class="fav-tile-label">Higgs</span>
+                    </button>
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="gluon" data-kicker="boson" data-name="Gluon" data-desc="Holds quarks together and never shows up alone.">
+                        <canvas class="fav-viz" width="16" height="16"></canvas>
+                        <span class="fav-tile-label">Gluon</span>
+                    </button>
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="neutrino" data-kicker="fermion" data-name="Electron neutrino" data-desc="Trillions pass through you every second. None of them care.">
+                        <canvas class="fav-viz" width="16" height="16"></canvas>
+                        <span class="fav-tile-label">Neutrino</span>
+                    </button>
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="titanium" data-kicker="element" data-name="Titanium" data-desc="Ti · 22 — light, strong, refuses to rust.">
+                        <canvas class="fav-viz" width="16" height="16"></canvas>
+                        <span class="fav-tile-label">Titanium</span>
+                    </button>
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="planck" data-kicker="constant" data-name="Planck constant" data-desc="h = 6.626×10⁻³⁴ J·s. The universe's pixel size.">
+                        <canvas class="fav-viz" width="16" height="16"></canvas>
+                        <span class="fav-tile-label">Planck h</span>
+                    </button>
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="emirp" data-kicker="number" data-name="73 &amp; 37" data-desc="Mirror primes — the 21st and the 12th. And 1001001 reads the same backwards.">
+                        <canvas class="fav-viz" width="16" height="16"></canvas>
+                        <span class="fav-tile-label">73 &amp; 37</span>
+                    </button>
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="euler" data-kicker="hero" data-name="Leonhard Euler" data-desc="e&lt;sup&gt;iπ&lt;/sup&gt; + 1 = 0. Case closed.">
+                        <canvas class="fav-viz" width="16" height="16"></canvas>
+                        <span class="fav-tile-label">Euler</span>
+                    </button>
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="gauss" data-kicker="hero" data-name="Carl Friedrich Gauß" data-desc="Summed 1–100 at seven and never slowed down.">
+                        <canvas class="fav-viz" width="16" height="16"></canvas>
+                        <span class="fav-tile-label">Gauß</span>
+                    </button>
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="batman" data-kicker="hero" data-name="Batman" data-desc="No superpowers. Just preparation.">
+                        <canvas class="fav-viz" width="16" height="16"></canvas>
+                        <span class="fav-tile-label">Batman</span>
+                    </button>
                 </div>
+                <p class="fav-placard" id="fav-placard" aria-live="polite">
+                    <span class="fav-kicker" id="fav-p-kicker"></span>
+                    <span class="fav-p-line"><span class="fav-p-name" id="fav-p-name"></span><span id="fav-p-desc"></span></span>
+                </p>
             </section>
 
-            <section class="section">
+            <section class="section" id="play">
                 <h2 class="section-title">Diversion</h2>
                 <p class="section-sub">Reflex — tap the lit square. 15 seconds.</p>
                 <div class="game" id="game">

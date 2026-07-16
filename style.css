@@ -26,6 +26,10 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+
 body {
   background-color: var(--bg);
   /* whisper-faint dot grid for texture, not noise */
@@ -153,11 +157,39 @@ a {
   letter-spacing: 0.01em;
 }
 
+/* quiet map of the page — one pixel per stop */
+.profile-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
+  font-size: 12px;
+}
+
+.profile-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-faint);
+  transition: color 160ms var(--ease-out);
+}
+.profile-nav a::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  background: currentColor;
+  opacity: 0.35;
+  transition: background-color 160ms var(--ease-out), opacity 160ms var(--ease-out);
+}
+.profile-nav a:hover { color: var(--text); }
+.profile-nav a:hover::before { background: var(--pixel-orange); opacity: 1; }
+
 /* ── sections ──────────────────────────────────────────────────────────── */
 .section {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  scroll-margin-top: 24px;
 }
 
 .section-title {
@@ -182,13 +214,14 @@ a {
   grid-auto-flow: column;
   grid-template-rows: repeat(7, 1fr);
   grid-auto-columns: 1fr;
-  gap: 3px;
+  gap: 2px;
   width: 100%;
   aspect-ratio: 53 / 7;
 }
 
 #contrib-graph .cell {
-  border-radius: 2px;
+  /* crisp squares: the graph is pixel art now */
+  border-radius: 0;
   background: var(--c0);
   /* one-time reveal: a soft wave from left to right (delay set per-column in JS).
      `backwards` shows the start state during the delay, then releases the
@@ -208,6 +241,9 @@ a {
 #contrib-graph .cell.level-3 { background: var(--c3); }
 #contrib-graph .cell.level-4 { background: var(--c4); }
 
+/* the single best day of the year burns orange */
+#contrib-graph .cell.peak { background: var(--pixel-orange); }
+
 /* playful: sweep the mouse across the graph and the days pop up */
 @media (hover: hover) and (pointer: fine) {
   #contrib-graph .cell {
@@ -215,7 +251,6 @@ a {
   }
   #contrib-graph .cell:hover {
     transform: scale(1.55);
-    border-radius: 3px;
     z-index: 2;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
   }
@@ -362,46 +397,79 @@ a.song:hover {
 /* ── favorites: the nerd canon, in pixels ──────────────────────────────── */
 .fav-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
 }
 
-.fav-card {
+.fav-tile {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 14px;
-  padding: 13px 15px;
+  gap: 7px;
+  padding: 12px 6px 10px;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--surface);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  transition: border-color 180ms var(--ease-out), box-shadow 180ms var(--ease-out);
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition:
+    transform 160ms var(--ease-out),
+    border-color 180ms var(--ease-out),
+    box-shadow 180ms var(--ease-out);
+  animation: cardIn 420ms var(--ease-out) backwards;
 }
+.fav-tile:nth-child(1)  { animation-delay: 30ms; }
+.fav-tile:nth-child(2)  { animation-delay: 65ms; }
+.fav-tile:nth-child(3)  { animation-delay: 100ms; }
+.fav-tile:nth-child(4)  { animation-delay: 135ms; }
+.fav-tile:nth-child(5)  { animation-delay: 170ms; }
+.fav-tile:nth-child(6)  { animation-delay: 205ms; }
+.fav-tile:nth-child(7)  { animation-delay: 240ms; }
+.fav-tile:nth-child(8)  { animation-delay: 275ms; }
+.fav-tile:nth-child(9)  { animation-delay: 310ms; }
+.fav-tile:nth-child(10) { animation-delay: 345ms; }
+.fav-tile:nth-child(11) { animation-delay: 380ms; }
+.fav-tile:nth-child(12) { animation-delay: 415ms; }
+
 @media (hover: hover) and (pointer: fine) {
-  .fav-card:hover {
+  .fav-tile:hover {
     border-color: var(--border-strong);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
   }
 }
+.fav-tile:active { transform: scale(0.97); }
+.fav-tile:focus-visible { outline: 2px solid var(--pixel-orange); outline-offset: 2px; }
+.fav-tile.selected { border-color: var(--pixel-orange); }
+.fav-tile.selected .fav-tile-label { color: var(--text); }
 
 /* tiny 16×16 canvases blown up into chunky pixels */
 .fav-viz {
   width: 64px;
   height: 64px;
-  padding: 6px;
-  flex-shrink: 0;
   image-rendering: pixelated;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
 }
 
-.fav-main {
+.fav-tile-label {
+  font-size: 11.5px;
+  font-weight: 550;
+  letter-spacing: -0.01em;
+  color: var(--text-muted);
+  transition: color 160ms var(--ease-out);
+}
+
+/* museum placard: describes the hovered / selected specimen */
+.fav-placard {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+  gap: 1px;
+  min-height: 42px;
+  padding: 0 2px;
+  transition: opacity 120ms ease, filter 120ms ease;
 }
+.fav-placard.swap { opacity: 0; filter: blur(2px); }
 
 .fav-kicker {
   font-size: 10px;
@@ -411,16 +479,15 @@ a.song:hover {
   color: var(--pixel-orange);
 }
 
-.fav-name {
-  font-size: 13.5px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.fav-desc {
-  font-size: 12px;
+.fav-p-line {
+  font-size: 12.5px;
   line-height: 1.4;
   color: var(--text-muted);
+}
+.fav-p-name {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
 }
 
 /* ── diversion: reflex game ────────────────────────────────────────────── */
@@ -598,16 +665,18 @@ body.freakout .profile-name {
   .container { padding-top: 88px; gap: 64px; }
   #avatar { width: 120px; height: 120px; }
   .profile-name { font-size: 38px; }
-  .fav-grid { grid-template-columns: 1fr 1fr; }
+  .fav-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
 /* ── reduced motion: keep fades, drop movement ─────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .profile, .section, .repo-card, #contrib-graph .cell {
+  .profile, .section, .repo-card, .fav-tile, #contrib-graph .cell {
     animation: none;
     opacity: 1;
     transform: none;
   }
+  .fav-tile:hover, .fav-tile:active { transform: none; }
+  .fav-placard { transition: none; }
   #avatar.spin,
   body.freakout .game-grid, body.freakout #contrib-graph,
   body.freakout .profile-name,

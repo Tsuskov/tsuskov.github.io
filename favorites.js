@@ -54,48 +54,58 @@
   }
   backprop.still = 5;
 
-  /* ── dijkstra: BFS flood from start, then the shortest path lights up ── */
-  const DK = (() => {
+  /* ── A*: the search leans toward the goal, then the path lights up ── */
+  const AS = (() => {
     const wall = (x, y) =>
       (x >= 4 && x <= 6 && y >= 3 && y <= 9) ||
       (x >= 9 && x <= 11 && y >= 6 && y <= 13);
-    const dist = new Array(256).fill(-1), prev = new Array(256).fill(-1);
-    const q = [[1, 14]];
-    dist[14 * 16 + 1] = 0;
-    while (q.length) {
-      const [x, y] = q.shift();
+    const start = 14 * 16 + 1, goal = 1 * 16 + 14;
+    const h = i => Math.abs((i % 16) - 14) + Math.abs(((i / 16) | 0) - 1);
+    const g = new Array(256).fill(-1), prev = new Array(256).fill(-1);
+    const open = [start], closed = [];
+    g[start] = 0;
+    while (open.length) {
+      let bi = 0;
+      for (let k = 1; k < open.length; k++) {
+        const fa = g[open[k]] + h(open[k]), fb = g[open[bi]] + h(open[bi]);
+        if (fa < fb || (fa === fb && h(open[k]) < h(open[bi]))) bi = k;
+      }
+      const cur = open.splice(bi, 1)[0];
+      closed.push(cur);
+      if (cur === goal) break;
+      const x = cur % 16, y = (cur / 16) | 0;
       [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => {
         const nx = x + dx, ny = y + dy;
-        if (nx < 0 || ny < 0 || nx > 15 || ny > 15) return;
-        if (wall(nx, ny) || dist[ny * 16 + nx] >= 0) return;
-        dist[ny * 16 + nx] = dist[y * 16 + x] + 1;
-        prev[ny * 16 + nx] = y * 16 + x;
-        q.push([nx, ny]);
+        if (nx < 0 || ny < 0 || nx > 15 || ny > 15 || wall(nx, ny)) return;
+        const ni = ny * 16 + nx;
+        if (g[ni] >= 0 && g[ni] <= g[cur] + 1) return;
+        g[ni] = g[cur] + 1;
+        prev[ni] = cur;
+        if (!open.includes(ni)) open.push(ni);
       });
     }
     const path = [];
-    let cur = 1 * 16 + 14;
+    let cur = goal;
     while (cur >= 0) { path.push(cur); cur = prev[cur]; }
     path.reverse();
-    return { wall, dist, path, dGoal: dist[1 * 16 + 14] };
+    return { wall, closed, path };
   })();
-  function dijkstra(c, f) {
-    const floodT = Math.ceil(DK.dGoal / 2), pathT = Math.ceil(DK.path.length / 2);
-    const t = f % (floodT + pathT + 8);
-    for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
-      if (DK.wall(x, y)) { px(c, x, y, P.ink); continue; }
-      const d = DK.dist[y * 16 + x];
-      if (d < 0) continue;
-      if (t <= floodT) {
-        if (d <= t * 2) px(c, x, y, d >= t * 2 - 1 ? P.g2 : P.g1);
-      } else if (d <= DK.dGoal) px(c, x, y, P.g1);
+  function astar(c, f) {
+    const searchT = Math.ceil(AS.closed.length / 3), pathT = Math.ceil(AS.path.length / 2);
+    const t = f % (searchT + pathT + 8);
+    for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++)
+      if (AS.wall(x, y)) px(c, x, y, P.ink);
+    const n = Math.min(t * 3, AS.closed.length);
+    for (let i = 0; i < n; i++) {
+      const cell = AS.closed[i];
+      px(c, cell % 16, (cell / 16) | 0, i >= n - 3 && t <= searchT ? P.g2 : P.g1);
     }
-    if (t > floodT) DK.path.slice(0, (t - floodT) * 2)
+    if (t > searchT) AS.path.slice(0, (t - searchT) * 2)
       .forEach(i => px(c, i % 16, (i / 16) | 0, P.o2));
     px(c, 1, 14, P.g4);
     px(c, 14, 1, P.o3);
   }
-  dijkstra.still = Math.ceil(DK.dGoal / 2) + Math.ceil(DK.path.length / 2);
+  astar.still = Math.ceil(AS.closed.length / 3) + Math.ceil(AS.path.length / 2);
 
   /* ── graph: a token walks the edges ── */
   const GN = [[3, 2], [12, 2], [8, 7], [3, 12], [13, 11], [7, 13]];
@@ -291,20 +301,58 @@
 
   /* ── bootstrap ── */
   const R = {
-    backprop, dijkstra, graph, higgs, gluon, neutrino,
+    backprop, astar, graph, higgs, gluon, neutrino,
     titanium, euler, gauss, batman, emirp, planck,
   };
-  const views = [...document.querySelectorAll(".fav-viz")]
-    .map(cv => ({ c: cv.getContext("2d"), fn: R[cv.dataset.viz] }))
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const tiles = [...document.querySelectorAll(".fav-tile")];
+  const views = tiles
+    .map(t => ({ c: t.querySelector(".fav-viz").getContext("2d"), fn: R[t.dataset.viz] }))
     .filter(v => v.fn);
   const draw = (v, f) => {
     v.c.clearRect(0, 0, 16, 16);
     v.fn(v.c, f);
   };
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  if (reduced) {
     views.forEach(v => draw(v, v.fn.still));
   } else {
     let f = 0;
     setInterval(() => { f++; views.forEach(v => draw(v, f)); }, 150);
   }
+
+  /* museum placard: hover (mouse) or tap selects a specimen */
+  const placard = document.getElementById("fav-placard");
+  const pk = document.getElementById("fav-p-kicker");
+  const pn = document.getElementById("fav-p-name");
+  const pd = document.getElementById("fav-p-desc");
+  let selected = null, swapTimer = null;
+  function select(tile) {
+    if (tile === selected) return;
+    if (selected) {
+      selected.classList.remove("selected");
+      selected.setAttribute("aria-pressed", "false");
+    }
+    selected = tile;
+    tile.classList.add("selected");
+    tile.setAttribute("aria-pressed", "true");
+    const apply = () => {
+      pk.textContent = tile.dataset.kicker;
+      pn.textContent = tile.dataset.name;
+      pd.innerHTML = " — " + tile.dataset.desc;
+      placard.classList.remove("swap");
+    };
+    clearTimeout(swapTimer);
+    if (reduced) apply();
+    else {
+      placard.classList.add("swap");
+      swapTimer = setTimeout(apply, 110);
+    }
+  }
+  tiles.forEach(t => {
+    t.addEventListener("click", () => select(t));
+    t.addEventListener("pointerenter", e => {
+      if (e.pointerType === "mouse") select(t);
+    });
+  });
+  if (tiles.length) select(tiles[0]);
 })();

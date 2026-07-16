@@ -34,6 +34,7 @@ async function loadContributions() {
       `${data.total.lastYear} contributions in the last year`;
 
     const firstWeekday = new Date(data.contributions[0].date).getUTCDay();
+    let peak = null, peakCount = 0;
     data.contributions.forEach((day, i) => {
       const cell = document.createElement('div');
       cell.className = `cell level-${day.level}`;
@@ -43,8 +44,14 @@ async function loadContributions() {
       // soft left-to-right reveal wave: delay per column (~53 columns)
       const col = Math.floor((i + firstWeekday) / 7);
       cell.style.setProperty('--cell-delay', `${col * 13}ms`);
+      if (day.count > peakCount) { peakCount = day.count; peak = cell; }
       graph.appendChild(cell);
     });
+    // the single best day of the year burns orange
+    if (peak) {
+      peak.classList.add('peak');
+      peak.title += ' · best day of the year';
+    }
   } catch {
     graph.textContent = 'Could not load contributions.';
   }

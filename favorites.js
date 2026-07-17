@@ -313,12 +313,10 @@
     v.c.clearRect(0, 0, 16, 16);
     v.fn(v.c, f);
   };
-  if (reduced) {
-    views.forEach(v => draw(v, v.fn.still));
-  } else {
-    let f = 0;
-    setInterval(() => { f++; views.forEach(v => draw(v, f)); }, 150);
-  }
+  /* Always animate: these are tiny 7 fps pixel tiles, and iOS "Reduce
+     Motion" would otherwise freeze them to a single frame. */
+  let f = 0;
+  setInterval(() => { f++; views.forEach(v => draw(v, f)); }, 150);
 
   /* museum placard: hover (mouse) or tap selects a specimen */
   const placard = document.getElementById("fav-placard");

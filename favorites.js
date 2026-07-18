@@ -334,9 +334,10 @@
     tile.classList.add("selected");
     tile.setAttribute("aria-pressed", "true");
     const apply = () => {
-      pk.textContent = tile.dataset.kicker;
-      pn.textContent = tile.dataset.name;
-      pd.innerHTML = " — " + tile.dataset.desc;
+      const de = document.documentElement.lang === "de";
+      pk.textContent = (de && tile.dataset.kickerDe) || tile.dataset.kicker;
+      pn.textContent = (de && tile.dataset.nameDe) || tile.dataset.name;
+      pd.innerHTML = " — " + ((de && tile.dataset.descDe) || tile.dataset.desc);
       placard.classList.remove("swap");
     };
     clearTimeout(swapTimer);
@@ -353,4 +354,12 @@
     });
   });
   if (tiles.length) select(tiles[0]);
+
+  // re-render the placard in the new language
+  document.addEventListener("langchange", () => {
+    if (!selected) return;
+    const tile = selected;
+    selected = null;
+    select(tile);
+  });
 })();

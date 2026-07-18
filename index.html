@@ -4,16 +4,16 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Tim Suskov</title>
-        <meta name="description" content="Tim Suskov — developer in Berlin. Profile, contributions and projects, under x-ray." />
+        <meta name="description" content="Tim Suskov — developer in Berlin, building an LLM stack from scratch in Rust." />
         <link rel="icon" type="image/png" href="favicon.png" />
         <link rel="apple-touch-icon" href="apple-touch-icon.png" />
         <meta property="og:title" content="Tim Suskov" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://tsuskov.github.io/" />
-        <meta property="og:description" content="Developer in Berlin. Profile, contributions and projects, under x-ray." />
+        <meta property="og:description" content="Developer in Berlin, building an LLM stack from scratch in Rust." />
         <meta property="og:image" content="https://tsuskov.github.io/og.png" />
         <meta name="twitter:card" content="summary_large_image" />
-        <link rel="stylesheet" href="style.css?v=5" />
+        <link rel="stylesheet" href="style.css?v=6" />
     </head>
     <body>
         <main class="container">
@@ -26,64 +26,60 @@
                 </p>
                 <p class="profile-stats" id="profile-stats"></p>
                 <nav class="profile-nav">
-                    <a href="#contributions">contributions</a>
-                    <a href="#featured">featured</a>
-                    <a href="#repos">repos</a>
-                    <a href="#writing">writing</a>
-                    <a href="#songs">songs</a>
-                    <a href="#favorites">favorites</a>
-                    <a href="#play">play</a>
+                    <a href="#contributions" data-i18n="nav.contributions">contributions</a>
+                    <a href="#featured" data-i18n="nav.featured">featured</a>
+                    <a href="#repos" data-i18n="nav.repos">repos</a>
+                    <a href="#writing" data-i18n="nav.writing">writing</a>
+                    <a href="#songs" data-i18n="nav.songs">songs</a>
+                    <a href="#favorites" data-i18n="nav.favorites">favorites</a>
+                    <a href="#play" data-i18n="nav.play">play</a>
+                    <button type="button" class="lang-toggle" id="lang-toggle" aria-label="Sprache wechseln / switch language">DE</button>
                 </nav>
             </header>
 
             <section class="section" id="contributions">
-                <h2 class="section-title">Contributions</h2>
+                <h2 class="section-title" data-i18n="title.contributions">Contributions</h2>
                 <p class="section-sub" id="contrib-total"></p>
                 <div id="contrib-graph"></div>
             </section>
 
             <section class="section" id="featured">
-                <h2 class="section-title">Featured</h2>
+                <h2 class="section-title" data-i18n="title.featured">Featured</h2>
                 <a class="repo-card" href="https://tsuskov.github.io/talos-forge/">
                     <span class="repo-main">
                         <span class="repo-name">Homeros</span>
-                        <span class="repo-desc">
-                            A from-scratch LLM running in your browser —
-                            Cadmus (tokenizer) → Hephaistos (training) →
-                            Talos (inference), compiled to wasm. Everything
-                            local, nothing leaves your machine.
-                        </span>
+                        <span class="repo-desc" data-i18n="featured.homeros">An LLM that runs entirely in your browser. I built every stage myself in Rust — Cadmus tokenizes, Hephaistos trains, Talos runs inference — and compiled it to wasm, so nothing leaves your machine.</span>
                     </span>
                     <span class="repo-lang live">live</span>
                 </a>
             </section>
 
             <section class="section" id="repos">
-                <h2 class="section-title">Repositories</h2>
+                <h2 class="section-title" data-i18n="title.repos">Repositories</h2>
                 <div id="repo-list"></div>
             </section>
 
             <section class="section" id="writing">
-                <h2 class="section-title">Writing</h2>
+                <h2 class="section-title" data-i18n="title.writing">Writing</h2>
                 <a class="repo-card" href="blog/argus.html">
                     <span class="repo-main">
-                        <span class="repo-name">I gave AI agents a flight recorder</span>
-                        <span class="repo-desc">Everything your agent touches on your Mac — live, with red flags on the paths that matter. A real Claude Code session: 299 files, 61 processes, 3 keychain reads.</span>
+                        <span class="repo-name" data-i18n="writing.argus.title">I gave AI agents a flight recorder</span>
+                        <span class="repo-desc" data-i18n="writing.argus.desc">Argus shows live what an AI agent touches on your Mac. In one real Claude Code session it logged 299 file accesses, 61 processes and 3 keychain reads.</span>
                     </span>
                     <span class="repo-lang plain">Jul 2026</span>
                 </a>
                 <a class="repo-card" href="blog/talos.html">
                     <span class="repo-main">
-                        <span class="repo-name">I built the whole LLM stack from scratch in Rust</span>
-                        <span class="repo-desc">Tokenizer training, backprop by hand, Metal kernels, RAG from scratch — and it runs in your browser.</span>
+                        <span class="repo-name" data-i18n="writing.talos.title">I built the whole LLM stack from scratch in Rust</span>
+                        <span class="repo-desc" data-i18n="writing.talos.desc">Tokenizer training, backprop by hand, Metal kernels and RAG, all written myself — and it runs in the browser.</span>
                     </span>
                     <span class="repo-lang plain">Jul 2026</span>
                 </a>
             </section>
 
             <section class="section" id="songs">
-                <h2 class="section-title">Songs</h2>
-                <p class="section-sub">On repeat lately.</p>
+                <h2 class="section-title" data-i18n="title.songs">Songs</h2>
+                <p class="section-sub" data-i18n="songs.sub">On repeat lately.</p>
                 <div class="song-list" id="song-list">
                     <a class="song" href="https://music.apple.com/de/album/flim/282478739?i=282478754" target="_blank" rel="noopener"><span class="song-title">Flim</span><span class="song-artist">Aphex Twin</span></a>
                     <a class="song" href="https://music.apple.com/de/album/alberto-balsalm-1994/281829991?i=281830075" target="_blank" rel="noopener"><span class="song-title">Alberto Balsalm</span><span class="song-artist">Aphex Twin</span></a>
@@ -92,53 +88,101 @@
             </section>
 
             <section class="section" id="favorites">
-                <h2 class="section-title">Favorites</h2>
+                <h2 class="section-title" data-i18n="title.favorites">Favorites</h2>
                 <div class="fav-grid">
-                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="backprop" data-kicker="algorithm" data-name="Backpropagation" data-desc="The chain rule, industrialized. Hand-rolled in Hephaistos.">
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="backprop"
+                        data-kicker="algorithm" data-kicker-de="algorithmus"
+                        data-name="Backpropagation"
+                        data-desc="I implemented it by hand for Hephaistos, and I still remember the moment the loss actually went down for the first time."
+                        data-desc-de="Ich habe es für Hephaistos von Hand implementiert und erinnere mich noch genau an den Moment, als der Loss zum ersten Mal wirklich runterging.">
                         <canvas class="fav-viz" width="16" height="16"></canvas>
                         <span class="fav-tile-label">Backprop</span>
                     </button>
-                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="astar" data-kicker="algorithm" data-name="A*" data-desc="Dijkstra, but it knows where it's going.">
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="astar"
+                        data-kicker="algorithm" data-kicker-de="algorithmus"
+                        data-name="A*"
+                        data-desc="I first used it for pathfinding in the small games I made when I started coding, and I've liked it ever since."
+                        data-desc-de="Ich habe ihn zum ersten Mal fürs Pathfinding in meinen ersten kleinen Spielen benutzt und mag ihn seitdem.">
                         <canvas class="fav-viz" width="16" height="16"></canvas>
                         <span class="fav-tile-label">A*</span>
                     </button>
-                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="graph" data-kicker="data structure" data-name="Graph" data-desc="Everything is one, if you squint hard enough.">
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="graph"
+                        data-kicker="data structure" data-kicker-de="datenstruktur"
+                        data-name="Graph"
+                        data-desc="Sooner or later every project I start turns out to be a graph problem, so at some point I just accepted it."
+                        data-desc-de="Früher oder später stellt sich jedes meiner Projekte als Graphenproblem heraus — irgendwann habe ich es einfach akzeptiert.">
                         <canvas class="fav-viz" width="16" height="16"></canvas>
                         <span class="fav-tile-label">Graph</span>
                     </button>
-                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="higgs" data-kicker="boson" data-name="Higgs boson" data-desc="The reason anything weighs anything at all.">
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="higgs"
+                        data-kicker="boson"
+                        data-name="Higgs boson" data-name-de="Higgs-Boson"
+                        data-desc="I like that mass isn't something you have but an interaction you take part in — that idea got me into particle physics."
+                        data-desc-de="Mir gefällt, dass Masse nichts ist, das man hat, sondern eine Wechselwirkung, an der man teilnimmt — diese Idee hat mich zur Teilchenphysik gebracht.">
                         <canvas class="fav-viz" width="16" height="16"></canvas>
                         <span class="fav-tile-label">Higgs</span>
                     </button>
-                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="gluon" data-kicker="boson" data-name="Gluon" data-desc="Holds quarks together and never shows up alone.">
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="gluon"
+                        data-kicker="boson"
+                        data-name="Gluon"
+                        data-desc="It's the reason a quark can never be alone — I read about confinement in school and haven't fully gotten over it."
+                        data-desc-de="Es ist der Grund, warum ein Quark nie allein sein kann — ich habe in der Schule von Confinement gelesen und bin bis heute nicht ganz darüber hinweg.">
                         <canvas class="fav-viz" width="16" height="16"></canvas>
                         <span class="fav-tile-label">Gluon</span>
                     </button>
-                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="neutrino" data-kicker="fermion" data-name="Electron neutrino" data-desc="Trillions pass through you every second. None of them care.">
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="neutrino"
+                        data-kicker="fermion"
+                        data-name="Electron neutrino" data-name-de="Elektron-Neutrino"
+                        data-desc="Trillions of them fly through you every second without leaving a trace — my go-to fact when someone asks why I like physics."
+                        data-desc-de="Billionen davon fliegen jede Sekunde spurlos durch dich durch — mein Standard-Fakt, wenn jemand fragt, warum ich Physik mag.">
                         <canvas class="fav-viz" width="16" height="16"></canvas>
-                        <span class="fav-tile-label">Electron neutrino</span>
+                        <span class="fav-tile-label" data-i18n="fav.label.neutrino">Electron neutrino</span>
                     </button>
-                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="titanium" data-kicker="element" data-name="Titanium" data-desc="Ti · 22 — light, strong, refuses to rust.">
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="titanium"
+                        data-kicker="element"
+                        data-name="Titanium" data-name-de="Titan"
+                        data-desc="Ever since chemistry class it's been my answer to 'favorite element' — light, strong, and it just doesn't corrode."
+                        data-desc-de="Seit dem Chemieunterricht meine Antwort auf die Frage nach dem Lieblingselement — leicht, stabil, und es korrodiert einfach nicht.">
                         <canvas class="fav-viz" width="16" height="16"></canvas>
-                        <span class="fav-tile-label">Titanium</span>
+                        <span class="fav-tile-label" data-i18n="fav.label.titanium">Titanium</span>
                     </button>
-                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="planck" data-kicker="constant" data-name="Planck constant" data-desc="h = 6.626×10⁻³⁴ J·s. The universe's pixel size.">
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="planck"
+                        data-kicker="constant" data-kicker-de="konstante"
+                        data-name="Planck constant" data-name-de="Planck-Konstante"
+                        data-desc="h = 6.626×10⁻³⁴ J·s — the idea that energy comes in smallest steps blew my mind in school, and it still does."
+                        data-desc-de="h = 6,626×10⁻³⁴ J·s — dass Energie in kleinsten Schritten kommt, hat mich in der Schule umgehauen und tut es bis heute.">
                         <canvas class="fav-viz" width="16" height="16"></canvas>
                         <span class="fav-tile-label">Planck h</span>
                     </button>
-                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="emirp" data-kicker="number" data-name="73 &amp; 37" data-desc="Mirror primes — the 21st and the 12th. And 1001001 reads the same backwards.">
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="emirp"
+                        data-kicker="number" data-kicker-de="zahl"
+                        data-name="73 &amp; 37"
+                        data-desc="Yes, I got this one from Sheldon Cooper — but I checked the math myself: mirror primes, the 21st and the 12th, and 73 in binary is a palindrome."
+                        data-desc-de="Ja, das habe ich von Sheldon Cooper — aber nachgerechnet habe ich selbst: Spiegel-Primzahlen, die 21. und die 12., und 73 ist binär ein Palindrom.">
                         <canvas class="fav-viz" width="16" height="16"></canvas>
                         <span class="fav-tile-label">73 &amp; 37</span>
                     </button>
-                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="euler" data-kicker="hero" data-name="Leonhard Euler" data-desc="e&lt;sup&gt;iπ&lt;/sup&gt; + 1 = 0. Case closed.">
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="euler"
+                        data-kicker="hero" data-kicker-de="held"
+                        data-name="Leonhard Euler"
+                        data-desc="Every time I think I've found something neat in math, it turns out Euler already did it around 1750 — at this point I just admire him."
+                        data-desc-de="Jedes Mal, wenn ich denke, ich hätte etwas Schönes in der Mathematik gefunden, war Euler um 1750 schon da — inzwischen bewundere ich ihn einfach.">
                         <canvas class="fav-viz" width="16" height="16"></canvas>
                         <span class="fav-tile-label">Euler</span>
                     </button>
-                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="gauss" data-kicker="hero" data-name="Carl Friedrich Gauß" data-desc="Summed 1–100 at seven and never slowed down.">
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="gauss"
+                        data-kicker="hero" data-kicker-de="held"
+                        data-name="Carl Friedrich Gauß"
+                        data-desc="The story of him summing 1 to 100 as a schoolkid is half the reason I ended up in math — and his distribution shows up in every ML project I touch."
+                        data-desc-de="Die Geschichte, wie er als Schulkind 1 bis 100 addiert hat, ist der halbe Grund, warum ich bei der Mathematik gelandet bin — und seine Verteilung taucht in jedem meiner ML-Projekte wieder auf.">
                         <canvas class="fav-viz" width="16" height="16"></canvas>
                         <span class="fav-tile-label">Gauß</span>
                     </button>
-                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="batman" data-kicker="hero" data-name="Batman" data-desc="No superpowers. Just preparation.">
+                    <button type="button" class="fav-tile" aria-pressed="false" data-viz="batman"
+                        data-kicker="hero" data-kicker-de="held"
+                        data-name="Batman"
+                        data-desc="My first GitHub account was called Leg0Batman, so this one is non-negotiable."
+                        data-desc-de="Mein erster GitHub-Account hieß Leg0Batman — das hier steht also nicht zur Debatte.">
                         <canvas class="fav-viz" width="16" height="16"></canvas>
                         <span class="fav-tile-label">Batman</span>
                     </button>
@@ -150,8 +194,8 @@
             </section>
 
             <section class="section" id="play">
-                <h2 class="section-title">Diversion</h2>
-                <p class="section-sub">Reflex — tap the lit square. 15 seconds.</p>
+                <h2 class="section-title" data-i18n="title.play">Play</h2>
+                <p class="section-sub" data-i18n="play.sub">Reflex — tap the lit square. 15 seconds.</p>
                 <div class="game" id="game">
                     <div class="game-hud">
                         <span class="game-score" id="game-score">0</span>
@@ -170,7 +214,8 @@
             </footer>
         </main>
 
-        <script src="contributions.js?v=2"></script>
-        <script src="favorites.js?v=3"></script>
+        <script src="i18n.js?v=1"></script>
+        <script src="contributions.js?v=3"></script>
+        <script src="favorites.js?v=4"></script>
     </body>
 </html>

@@ -1,5 +1,9 @@
 const USERNAME = 'tsuskov';
 
+// i18n.js sets <html lang> and fires "langchange"; pick strings per render
+const isDE = () => document.documentElement.lang === 'de';
+const L = (en, de) => (isDE() ? de : en);
+
 // fetch with localStorage fallback: the unauthenticated GitHub API allows
 // 60 requests/hour per IP, so reuse the last good response when it fails
 async function fetchJSON(url, cacheKey) {
@@ -30,30 +34,48 @@ async function loadContributions() {
       'contributions'
     );
 
-    document.getElementById('contrib-total').textContent =
-      `${data.total.lastYear} contributions in the last year`;
+    const renderTotal = () => {
+      document.getElementById('contrib-total').textContent = L(
+        `${data.total.lastYear} contributions in the last year`,
+        `${data.total.lastYear} Beiträge im letzten Jahr`
+      );
+    };
+    renderTotal();
+    document.addEventListener('langchange', renderTotal);
+
+    const cellTitle = (day) => L(
+      `${day.count} contribution${day.count === 1 ? '' : 's'} on ${day.date}`,
+      `${day.count} ${day.count === 1 ? 'Beitrag' : 'Beiträge'} am ${day.date}`
+    );
 
     const firstWeekday = new Date(data.contributions[0].date).getUTCDay();
-    let peak = null, peakCount = 0;
+    let peak = null, peakCount = 0, peakDay = null;
+    const cells = [];
     data.contributions.forEach((day, i) => {
       const cell = document.createElement('div');
       cell.className = `cell level-${day.level}`;
-      cell.title = `${day.count} contribution${day.count === 1 ? '' : 's'} on ${day.date}`;
+      cell.title = cellTitle(day);
       // align the first column to the correct weekday
       if (i === 0) cell.style.gridRow = firstWeekday + 1;
       // soft left-to-right reveal wave: delay per column (~53 columns)
       const col = Math.floor((i + firstWeekday) / 7);
       cell.style.setProperty('--cell-delay', `${col * 13}ms`);
-      if (day.count > peakCount) { peakCount = day.count; peak = cell; }
+      if (day.count > peakCount) { peakCount = day.count; peak = cell; peakDay = day; }
+      cells.push(cell);
       graph.appendChild(cell);
     });
     // the single best day of the year burns orange
+    const peakSuffix = () => L(' · best day of the year', ' · bester Tag des Jahres');
     if (peak) {
       peak.classList.add('peak');
-      peak.title += ' · best day of the year';
+      peak.title += peakSuffix();
     }
+    document.addEventListener('langchange', () => {
+      cells.forEach((cell, i) => { cell.title = cellTitle(data.contributions[i]); });
+      if (peak) peak.title = cellTitle(peakDay) + peakSuffix();
+    });
   } catch {
-    graph.textContent = 'Could not load contributions.';
+    graph.textContent = L('Could not load contributions.', 'Beiträge konnten nicht geladen werden.');
   }
 }
 
@@ -61,8 +83,14 @@ async function loadProfile() {
   const stats = document.getElementById('profile-stats');
   try {
     const data = await fetchJSON(`https://api.github.com/users/${USERNAME}`, 'profile');
-    stats.textContent =
-      `${data.public_repos} repos · ${data.followers} followers · est. ${new Date(data.created_at).getFullYear()}`;
+    const render = () => {
+      stats.textContent = L(
+        `${data.public_repos} repos · ${data.followers} followers · est. ${new Date(data.created_at).getFullYear()}`,
+        `${data.public_repos} Repos · ${data.followers} Follower · seit ${new Date(data.created_at).getFullYear()}`
+      );
+    };
+    render();
+    document.addEventListener('langchange', render);
   } catch {
     stats.textContent = '';
   }
@@ -93,7 +121,7 @@ async function loadRepos() {
       list.appendChild(card);
     }
   } catch {
-    list.textContent = 'Could not load repositories.';
+    list.textContent = L('Could not load repositories.', 'Repositories konnten nicht geladen werden.');
   }
 }
 
@@ -134,7 +162,17 @@ replayOnClick(document.getElementById('avatar'), 'spin');
   let score = 0;
   let lit = -1;
   let endTimer = null;
-  bestEl.textContent = `best ${best}`;
+  let bestStar = false;
+  let lastScore = null;
+
+  const renderBest = () => {
+    bestEl.textContent = `${L('best', 'Rekord')} ${best}${bestStar ? ' ✦' : ''}`;
+  };
+  const renderBtn = () => {
+    btn.textContent = lastScore > 0 ? L(`Again · scored ${lastScore}`, `Nochmal · ${lastScore} Treffer`) : 'Start';
+  };
+  renderBest();
+  document.addEventListener('langchange', () => { renderBest(); renderBtn(); });
 
   function light() {
     let next = (Math.random() * CELLS) | 0;
@@ -172,9 +210,11 @@ replayOnClick(document.getElementById('avatar'), 'spin');
     if (score > best) {
       best = score;
       localStorage.setItem('reflex-best', best);
-      bestEl.textContent = `best ${best} ✦`;
+      bestStar = true;
+      renderBest();
     }
-    btn.textContent = score > 0 ? `Again · scored ${score}` : 'Start';
+    lastScore = score;
+    renderBtn();
   }
 
   function start() {

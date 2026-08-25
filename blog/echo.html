@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>I built local dictation for macOS, then took the LLM back out — Tim Suskov</title>
+        <meta name="description" content="Echo is hold-to-talk dictation that runs entirely on your Mac. The interesting part is the step I removed: a 3B model asked to tidy dictated maths invented a theorem that was never spoken." />
+        <link rel="icon" type="image/png" href="../favicon.png" />
+        <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+        <meta property="og:title" content="I built local dictation for macOS, then took the LLM back out" />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content="https://tsuskov.github.io/blog/echo.html" />
+        <meta property="og:description" content="A 3B model asked to clean up dictated maths invented an epsilon-N definition nobody had spoken. So the last mile of Echo is a lookup table, not a model." />
+        <meta property="og:image" content="https://tsuskov.github.io/og.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <link rel="stylesheet" href="../style.css?v=7" />
+        <style>
+            /* ── article layout ─────────────────────────────────────────── */
+            .post {
+                max-width: 640px;
+                margin: 0 auto;
+                padding: 56px 20px 0;
+            }
+
+            .post-header,
+            .post-body,
+            .post-footer {
+                opacity: 0;
+                transform: translateY(10px);
+                animation: blockIn 520ms var(--ease-out) forwards;
+            }
+            .post-header { animation-delay: 40ms; }
+            .post-body   { animation-delay: 110ms; }
+            .post-footer { animation-delay: 170ms; }
+
+            .post-back {
+                display: inline-block;
+                font-size: 13px;
+                color: var(--text-muted);
+                border-bottom: 1px solid transparent;
+                transition: color 160ms var(--ease-out), border-color 160ms var(--ease-out);
+            }
+            .post-back:hover { color: var(--text); border-color: var(--border-strong); }
+
+            .post-title {
+                margin-top: 22px;
+                font-size: 29px;
+                font-weight: 650;
+                letter-spacing: -0.02em;
+                line-height: 1.22;
+            }
+
+            .post-lede {
+                margin-top: 12px;
+                font-size: 16px;
+                line-height: 1.55;
+                color: var(--text-muted);
+            }
+
+            .post-meta {
+                margin-top: 14px;
+                font-size: 12.5px;
+                color: var(--text-faint);
+                letter-spacing: 0.01em;
+            }
+
+            /* ── stat strip ─────────────────────────────────────────────── */
+            .stats {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 8px;
+                margin: 28px 0 0;
+            }
+            .stat {
+                padding: 12px 14px;
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                background: var(--surface);
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.34);
+            }
+            .stat-value {
+                font-size: 17px;
+                font-weight: 650;
+                letter-spacing: -0.01em;
+                font-variant-numeric: tabular-nums;
+            }
+            .stat-label {
+                margin-top: 2px;
+                font-size: 11.5px;
+                color: var(--text-muted);
+            }
+
+            /* ── demo callout ───────────────────────────────────────────── */
+            .demo-card {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 16px;
+                margin-top: 28px;
+                padding: 15px 17px;
+                border: 1px solid var(--border);
+                border-radius: 14px;
+                background: var(--surface);
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.34);
+                transition:
+                    transform 130ms var(--ease-out),
+                    box-shadow 180ms var(--ease-out),
+                    border-color 180ms var(--ease-out);
+            }
+            @media (hover: hover) and (pointer: fine) {
+                .demo-card:hover {
+                    border-color: var(--border-strong);
+                    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.46);
+                }
+                .demo-card:hover .demo-arrow { transform: translateX(3px); }
+            }
+            .demo-card:active { transform: scale(0.98); }
+            .demo-name { font-size: 14.5px; font-weight: 600; letter-spacing: -0.01em; }
+            .demo-desc { margin-top: 3px; font-size: 12.5px; line-height: 1.45; color: var(--text-muted); }
+            .demo-arrow {
+                flex-shrink: 0;
+                color: var(--text-faint);
+                transition: transform 160ms var(--ease-out);
+            }
+
+            /* ── prose ──────────────────────────────────────────────────── */
+            .post-body { margin-top: 40px; }
+
+            .post-body h2 {
+                margin: 44px 0 0;
+                font-size: 20px;
+                font-weight: 650;
+                letter-spacing: -0.015em;
+                line-height: 1.3;
+            }
+
+            .post-body p {
+                margin: 16px 0 0;
+                font-size: 15.5px;
+                line-height: 1.65;
+            }
+
+            .post-body ul {
+                margin: 16px 0 0;
+                padding-left: 22px;
+            }
+            .post-body li {
+                margin: 8px 0 0;
+                font-size: 15.5px;
+                line-height: 1.6;
+            }
+
+            .post-body a {
+                border-bottom: 1px solid var(--border-strong);
+                padding-bottom: 1px;
+                transition: border-color 160ms var(--ease-out);
+            }
+            .post-body a:hover { border-color: var(--text); }
+
+            .post-body strong { font-weight: 600; }
+
+            .post-body img {
+                display: block;
+                max-width: 100%;
+                margin: 24px 0 0;
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.34);
+            }
+
+            code {
+                font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+                font-size: 0.88em;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 5px;
+                padding: 1px 5px;
+                white-space: nowrap;
+            }
+
+            /* terminal-ish excerpt block */
+            .term {
+                margin: 20px 0 0;
+                padding: 14px 17px;
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                background: var(--surface);
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.34);
+                font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+                font-size: 12.5px;
+                line-height: 1.7;
+                color: var(--text-muted);
+                overflow-x: auto;
+                white-space: pre;
+            }
+            .term b { color: var(--text); font-weight: 600; }
+            .term .flag { color: #ff6b6b; font-weight: 600; }
+
+            /* ── tables ─────────────────────────────────────────────────── */
+            .table-scroll { margin: 20px 0 0; overflow-x: auto; }
+            .post-body table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 13.5px;
+                font-variant-numeric: tabular-nums;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.34);
+            }
+            .post-body th, .post-body td {
+                padding: 9px 14px;
+                text-align: left;
+                white-space: nowrap;
+            }
+            .post-body th {
+                font-size: 11.5px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                color: var(--text-muted);
+                border-bottom: 1px solid var(--border);
+            }
+            .post-body tr + tr td { border-top: 1px solid var(--border); }
+
+            /* ── footer ─────────────────────────────────────────────────── */
+            .post-footer {
+                margin-top: 52px;
+                padding: 24px 0 52px;
+                border-top: 1px solid var(--border);
+                font-size: 13px;
+                color: var(--text-muted);
+            }
+            .post-footer p { margin: 0 0 8px; }
+            .post-footer a {
+                border-bottom: 1px solid var(--border-strong);
+                padding-bottom: 1px;
+                transition: color 160ms var(--ease-out), border-color 160ms var(--ease-out);
+            }
+            .post-footer a:hover { color: var(--text); border-color: var(--text); }
+
+            @media (min-width: 600px) {
+                .post { padding-top: 88px; }
+                .post-title { font-size: 34px; }
+            }
+            @media (max-width: 480px) {
+                .stats { grid-template-columns: repeat(2, 1fr); }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                .post-header, .post-body, .post-footer {
+                    animation: none;
+                    opacity: 1;
+                    transform: none;
+                }
+                .demo-card:active { transform: none; }
+                .demo-card:hover .demo-arrow { transform: none; }
+            }
+        </style>
+    </head>
+    <body>
+        <main class="post">
+            <header class="post-header">
+                <a class="post-back" href="../">&larr; Tim Suskov</a>
+                <h1 class="post-title">I built local dictation for macOS, then took the LLM back out</h1>
+                <p class="post-lede">Echo is hold-to-talk dictation that runs entirely on my Mac &mdash; hold right option, speak, release, the text lands wherever the cursor is. The part worth writing about is the step I deleted: an LLM pass that kept inventing mathematics I had never said.</p>
+                <p class="post-meta">August 2026 &middot; 8 min read</p>
+
+                <div class="stats">
+                    <div class="stat"><div class="stat-value">1.3s</div><div class="stat-label">to transcribe 14s of German on an M5</div></div>
+                    <div class="stat"><div class="stat-value">1</div><div class="stat-label">theorem invented by the cleanup model</div></div>
+                    <div class="stat"><div class="stat-value">0</div><div class="stat-label">accounts, and no network in the default path</div></div>
+                    <div class="stat"><div class="stat-value">3</div><div class="stat-label">macOS permissions, one of them a trap</div></div>
+                </div>
+
+                <a class="demo-card" href="https://github.com/Tsuskov/echo">
+                    <span class="demo-name">Echo on GitHub</span>
+                    <span class="demo-desc" style="display:block">Swift, MIT, macOS 14+. Build from source &mdash; see the honest note about distribution at the end.</span>
+                    <span class="demo-arrow">&rarr;</span>
+                </a>
+            </header>
+
+            <div class="post-body">
+                <p>I start a maths degree this autumn, and I write in Typst. Dictation is obvious for that: your hands are on paper, the notation is long to type, and the good commercial option costs $15 a month and ships your voice to someone else's server. whisper.cpp runs on my laptop, so I built the small thing around it.</p>
+
+                <p>That part took an evening. Hold the right option key, an <code>AVAudioEngine</code> tap records 16&nbsp;kHz mono into RAM, release posts the buffer to a <code>whisper-server</code> child process that keeps <code>large-v3-turbo</code> hot, and the result goes in through the pasteboard and &#8984;V with the clipboard restored afterwards. Fourteen seconds of German comes back in 1.3 seconds, language auto-detected. Fine.</p>
+
+                <p>Then I added the step everyone adds &mdash; a small local model to strip the <em>ähm</em>s and fix the punctuation &mdash; and that is where it got interesting.</p>
+
+                <h2>The cleanup pass invented a theorem</h2>
+
+                <p>I gave <code>llama3.2:3b</code> a transcript of me talking about convergence and a system prompt telling it, in so many words, to remove filler and change nothing else. Here is the input and what came back, unedited:</p>
+
+                <div class="term">in:  Also ich wollte halt sagen, dass die Konvergenz einer Folge
+     bedeutet, dass es für jedes Epsilon ein N gibt, weißt du.
+
+out: Die Konvergenz einer Folge bedeutet, dass für jedes ε (Epsilon)
+     ein N (Naturzahl) gibt, sodass für alle x &gt; N gilt: |x − L| &lt; ε.</div>
+
+                <p>Read the output again. The filler is gone, which is what I asked for. It also finished the definition. <code>sodass für alle x &gt; N gilt: |x − L| &lt; ε</code> was never spoken; the model completed the sentence the way a textbook would. It did not tidy my dictation &mdash; it answered it.</p>
+
+                <p>That is the specific failure that makes an LLM the wrong tool here. A wrong <em>word</em> in a dictated sentence is visible; you reread it and fix it. A wrong <em>theorem</em> in your own handwriting-equivalent is not, because it looks exactly like something you would have written, and it is correct-sounding mathematics. It just is not what you said.</p>
+
+                <p>Hardening the prompt helped and did not fix it. With explicit delimiters and a list of prohibitions &mdash; do not complete, do not answer, every word of your output must appear in the input &mdash; the 3B model stopped inventing on that sentence and instead left every filler word in place on the next one. <code>mistral:7b</code> did better on content and then wrapped its answer in quotation marks the prompt had explicitly banned, replaced <code>es gibt</code> with <code>existiert</code>, and took 3.8 seconds.</p>
+
+                <p>Meanwhile the thing I was trying to improve on &mdash; raw whisper <code>large-v3-turbo</code> &mdash; already punctuates German reasonably and swallows most <em>ähm</em>s by itself. So the default in Echo is now: if there is no API key, the cleanup step is <strong>off</strong>, and you get the raw transcript. A hallucinating cleanup is worse than no cleanup, and the bar it has to clear is higher than I assumed.</p>
+
+                <h2>Two guards, for the people who want it anyway</h2>
+
+                <p>Ollama is still there behind an explicit opt-in, with two checks that throw the model's answer away and keep the raw text:</p>
+
+                <ul>
+                    <li><strong>Length ratio.</strong> The result must be between 50% and 115% of the original. Catches the confident expansion.</li>
+                    <li><strong>Novel words.</strong> At most 20% of the output words may be absent from the input. Cleanup may reorder and delete; it may not bring much new vocabulary.</li>
+                </ul>
+
+                <p>I only added the second one because the first was not enough, and I know that because I tested the guards against the actual recorded failures rather than against my idea of them. The epsilon-N fabrication above is 128 characters against 119 &mdash; a ratio of 1.08, comfortably inside any length window I would have picked. It fails the word check at 33% novel words. The other hallucination that day failed on length and passed on words. One check would have shipped a hole.</p>
+
+                <h2>Maths mode is a table, not a model</h2>
+
+                <p>Hold shift while you press the key and Echo renders spoken notation. <code>Delta Phi plus Yx ist gleich 2 Omega Quadrat</code> becomes <code>$Delta Phi + Y x = 2 Omega^2$</code> in Typst, or <code>\Delta \Phi + Yx = 2 \Omega^2</code> in LaTeX, or <code>ΔΦ + Yx = 2Ω²</code> in Unicode.</p>
+
+                <p>Given the section above, this is deliberately a lookup table: Greek letters, relations, quantifiers, set operations, arbitrary exponents and subscripts. A table can be wrong or absent. It cannot invent a theorem. In maths mode the LLM cleanup is skipped entirely, because it would rewrite exactly the literal words the renderer keys on.</p>
+
+                <p>Two things fell out of building it that I did not expect. The first is German grammar: German capitalises every noun, so whisper writes <code>Epsilon</code> whether you mean ε or not. Capitalisation carries no information for letters without a distinct uppercase form, so those always render lowercase, and only letters that have a real uppercase glyph &mdash; Delta, Omega, Phi &mdash; follow the case whisper produced.</p>
+
+                <p>The second is that <code>Yx</code> breaks Typst. In Typst maths, a run of letters is an <em>identifier</em>, not multiplication, so <code>Yx</code> is an undefined name and the document fails to compile. Whisper, naturally, writes dictated variables together. I only found this because I piped every line the renderer produced through the real <code>typst compile</code> instead of reading them and nodding &mdash; which is the same mistake as trusting the cleanup model, one layer up. Runs containing a capital are now split back apart; leftover German words get quoted so they render as upright text instead of breaking the file.</p>
+
+                <h2>The war story: whisper says &ldquo;you&rdquo; when it hears nothing</h2>
+
+                <p>For an hour, every dictation inserted the word <code>you</code>. Nothing else, whatever I said.</p>
+
+                <p>That is whisper's signature hallucination on silence &mdash; the training data is full of YouTube subtitles, and an empty audio buffer decodes to <code>you</code> or <code>Thank you.</code> remarkably often. So the recording contained no sound. The microphone permission had to be the problem.</p>
+
+                <p>Except the app was not in the microphone list in System Settings at all &mdash; not denied, absent. An app only appears there once it has actually asked, and there is no button to add one by hand. I moved the app to <code>/Applications</code>, reset every TCC entry, requested access from a menu item instead of at launch, watched the permission dialog appear, clicked Allow, and it still did not show up.</p>
+
+                <p>The cause was in my build script. I sign with <code>--options runtime</code>, and the hardened runtime blocks microphone access <em>at the process level</em> unless the app carries <code>com.apple.security.device.audio-input</code>. I had never created an entitlements file. The permission dialog still appears, because TCC is a different layer and perfectly happy; the audio engine behind it just receives buffers of zeros. No error, no exception, no log line. Silence, and whisper politely says <code>you</code>.</p>
+
+                <div class="term">&lt;key&gt;com.apple.security.device.audio-input&lt;/key&gt;&lt;true/&gt;</div>
+
+                <p>Two lines of XML. The lesson I actually take from it is about the failure mode rather than the fix: three independent systems &mdash; hardened runtime, TCC, and a speech model &mdash; each behaved reasonably on its own, and together they produced a confident wrong answer with no error anywhere in the stack. I spent that hour chasing code signatures and file paths, and I ruled each of them out by reproducing them, which is the only reason I did not &ldquo;fix&rdquo; something that was never broken.</p>
+
+                <p>Echo now refuses to insert anything when the peak amplitude of a recording is below a threshold, and shows <em>Kein Ton</em> instead. The last recording is always written to <code>~/.config/echo/last.wav</code>, so the next person can settle the question in one command instead of an hour.</p>
+
+                <h2>What it is not</h2>
+
+                <ul>
+                    <li><strong>You have to build it yourself.</strong> I have an Apple Development certificate, not a Developer ID, so I cannot ship a signed binary that another Mac will run without a fight. <code>./scripts/build.sh</code> signs with whatever identity is in your keychain and installs to <code>/Applications</code>. This is the honest cost of not paying Apple $99 a year, and it is the main reason Echo is a repo rather than a download.</li>
+                    <li><strong>The hosted cleanup path is untested.</strong> The Anthropic branch is implemented and I have no API key, so I have not verified it end to end. It says so in the README too. A cleanup model with actual capability may well clear the bar the 3B models did not &mdash; I just have not measured it, and I am not going to claim it.</li>
+                    <li><strong>It polls, it does not watch.</strong> No resident watcher process, no event API. For a hold-to-talk key that is the right trade; it also means there is nothing clever to admire.</li>
+                    <li><strong>Secure input fields block it,</strong> because macOS blocks synthetic keystrokes there. Echo detects that and says so rather than silently doing nothing.</li>
+                </ul>
+
+                <p>The thing I keep turning over is that the whole project is an argument with itself. The transcription is a neural model and it is excellent &mdash; nothing hand-written comes close. The two steps <em>after</em> it both started as models and both ended up as deterministic code, because their failure mode was not noise but confident invention, in a domain where I cannot afford to check every line. Same stack, opposite conclusions, twenty lines apart.</p>
+            </div>
+
+            <footer class="post-footer">
+                <p>Code: <a href="https://github.com/Tsuskov/echo">github.com/Tsuskov/echo</a>. The Typst setup it feeds: <a href="https://github.com/Tsuskov/uni-mathe">uni-mathe</a>. Previously: <a href="argus.html">a flight recorder for AI agents</a>.</p>
+                <p>Echo is the mountain nymph of Greek myth who could not speak first and could only repeat what she had heard &mdash; which, for a dictation tool, is the entire specification.</p>
+            </footer>
+        </main>
+    </body>
+</html>

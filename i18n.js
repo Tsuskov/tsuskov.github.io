@@ -20,6 +20,14 @@
       "An LLM that runs entirely in your browser. I built every stage myself in Rust — Cadmus tokenizes, Hephaistos trains, Talos runs inference — and compiled it to wasm, so nothing leaves your machine.",
       "Ein LLM, das komplett im Browser läuft. Jede Stufe habe ich selbst in Rust gebaut — Cadmus tokenisiert, Hephaistos trainiert, Talos macht die Inferenz — und zu wasm kompiliert, nichts verlässt deinen Rechner.",
     ],
+    "writing.echo.title": [
+      "I built local dictation for macOS, then took the LLM back out",
+      "Ich habe lokales Diktat für macOS gebaut — und das LLM wieder ausgebaut",
+    ],
+    "writing.echo.desc": [
+      "A 3B model asked to tidy dictated maths invented an epsilon-N definition nobody had spoken. So the last mile is a lookup table, not a model.",
+      "Ein 3B-Modell sollte diktierte Mathematik aufräumen und erfand eine Epsilon-N-Definition, die nie gesprochen wurde. Also ist die letzte Meile eine Tabelle, kein Modell. (Post auf Englisch)",
+    ],
     "writing.argus.title": [
       "I gave AI agents a flight recorder",
       "Ich habe AI-Agents einen Flugschreiber gebaut",

@@ -16,7 +16,7 @@
     "title.songs": ["Songs", "Songs"],
     "title.favorites": ["Favorites", "Favoriten"],
     "title.play": ["Play", "Spiel"],
-    "featured.homeros": [
+    "featured.talos": [
       "An LLM that runs entirely in your browser. I built every stage myself in Rust — Cadmus tokenizes, Hephaistos trains, Talos runs inference — and compiled it to wasm, so nothing leaves your machine.",
       "Ein LLM, das komplett im Browser läuft. Jede Stufe habe ich selbst in Rust gebaut — Cadmus tokenisiert, Hephaistos trainiert, Talos macht die Inferenz — und zu wasm kompiliert, nichts verlässt deinen Rechner.",
     ],

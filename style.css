@@ -1,27 +1,29 @@
 :root {
+  color-scheme: dark;
+
   /* Emil easing curves */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 
-  --bg: #fafafa;
-  --surface: #ffffff;
-  --border: rgba(0, 0, 0, 0.08);
-  --border-strong: rgba(0, 0, 0, 0.14);
-  --text: #18181b;
-  --text-muted: #71717a;
-  --text-faint: #a1a1aa;
-  --accent: #18181b;
-  --hover: #f4f4f5;
+  --bg: #101010;
+  --surface: #191919;
+  --border: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.20);
+  --text: #ededed;
+  --text-muted: #9d9d9d;
+  --text-faint: #6b6b6b;
+  --accent: #ededed;
+  --hover: #242424;
 
   /* Mistral-style pixel orange */
   --pixel-orange: #ff8205;
 
-  /* contribution scale */
-  --c0: #ebedf0;
-  --c1: #9be9a8;
-  --c2: #40c463;
-  --c3: #30a14e;
-  --c4: #216e39;
+  /* contribution scale — GitHubs Dunkel-Rampe, für schwarzen Grund gemacht */
+  --c0: #1b1b1b;
+  --c1: #0e4429;
+  --c2: #006d32;
+  --c3: #26a641;
+  --c4: #39d353;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -33,7 +35,7 @@
 body {
   background-color: var(--bg);
   /* whisper-faint dot grid for texture, not noise */
-  background-image: radial-gradient(rgba(0, 0, 0, 0.035) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px);
   background-size: 22px 22px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -93,8 +95,8 @@ a {
   background: var(--hover);
   object-fit: cover;
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.06),
-    0 8px 24px rgba(0, 0, 0, 0.10);
+    0 1px 2px rgba(0, 0, 0, 0.38),
+    0 8px 24px rgba(0, 0, 0, 0.46);
   transition: transform 240ms var(--ease-out), box-shadow 240ms var(--ease-out);
   cursor: pointer;
 }
@@ -110,8 +112,8 @@ a {
   #avatar:hover {
     transform: scale(1.04);
     box-shadow:
-      0 2px 4px rgba(0, 0, 0, 0.08),
-      0 14px 34px rgba(0, 0, 0, 0.14);
+      0 2px 4px rgba(0, 0, 0, 0.42),
+      0 14px 34px rgba(0, 0, 0, 0.50);
   }
 }
 
@@ -267,7 +269,7 @@ a {
   #contrib-graph .cell:hover {
     transform: scale(1.55);
     z-index: 2;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.58);
   }
 }
 
@@ -287,7 +289,7 @@ a {
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--surface);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.34);
   transform-origin: center;
   transition:
     transform 130ms var(--ease-out),
@@ -313,7 +315,7 @@ a {
 @media (hover: hover) and (pointer: fine) {
   .repo-card:hover {
     border-color: var(--border-strong);
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.10);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.46);
   }
 }
 
@@ -389,12 +391,12 @@ a {
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--surface);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.34);
   transition: border-color 180ms var(--ease-out), box-shadow 180ms var(--ease-out);
 }
 a.song:hover {
   border-color: var(--border-strong);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.38);
 }
 .song-title { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
 .song-artist { font-size: 12.5px; color: var(--text-muted); white-space: nowrap; }
@@ -425,7 +427,7 @@ a.song:hover {
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--surface);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.34);
   font: inherit;
   color: inherit;
   cursor: pointer;
@@ -451,7 +453,7 @@ a.song:hover {
 @media (hover: hover) and (pointer: fine) {
   .fav-tile:hover {
     border-color: var(--border-strong);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.42);
     transform: translateY(-1px);
   }
 }
@@ -515,7 +517,7 @@ a.song:hover {
   border: 1px solid var(--border);
   border-radius: 16px;
   background: var(--surface);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.34);
 }
 
 .game-hud {
@@ -612,7 +614,7 @@ a.song:hover {
   align-items: center;
   justify-content: center;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(16, 16, 16, 0.62);
   backdrop-filter: blur(2px);
   transition: opacity 220ms var(--ease-out);
 }
@@ -631,13 +633,13 @@ a.song:hover {
   border-radius: 11px;
   padding: 11px 22px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.52);
   transition: transform 140ms var(--ease-out), box-shadow 180ms var(--ease-out);
 }
 @media (hover: hover) and (pointer: fine) {
   .game-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.20);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.56);
   }
 }
 .game-btn:active { transform: scale(0.96); }

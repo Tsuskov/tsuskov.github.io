@@ -1,11 +1,13 @@
 /* Favorites — tiny animated pixel-art visualizers on 16×16 canvases.
    Palette: Mistral-style orange gradient + the site's contribution greens.
+   faint/ink sind fuer dunklen Grund gesetzt: faint ist ein dunkles Grau,
+   ink das helle Zeichen - auf hellem Grund waeren beide vertauscht.
    Everything steps at ~7 fps for a chunky, deliberate pixel feel. */
 (() => {
   const P = {
     y: "#ffd800", o1: "#ffaf00", o2: "#ff8205", o3: "#fa500f", r: "#e10500",
     g1: "#9be9a8", g2: "#40c463", g3: "#30a14e", g4: "#216e39",
-    b: "#6366f1", faint: "#e4e4e7", ink: "#18181b",
+    b: "#6366f1", faint: "#2b2b2b", ink: "#ededed",
   };
 
   const px = (c, x, y, col) => {

@@ -1,0 +1,82 @@
+:root {
+  color-scheme: dark;
+  --bg: #101010;
+  --surface: #191919;
+  --border: rgba(255, 255, 255, 0.09);
+  --text: #ededed;
+  --text-muted: #9d9d9d;
+  --text-faint: #6b6b6b;
+  --red: #d10000;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 0 20px 96px;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+.wrap { max-width: 720px; margin: 0 auto; }
+
+header.top {
+  padding: 56px 0 40px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 40px;
+}
+
+.eyebrow {
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--red);
+  font-weight: 600;
+  margin: 0 0 12px;
+}
+
+h1 { font-size: clamp(28px, 6vw, 40px); line-height: 1.15; margin: 0 0 12px; letter-spacing: -0.02em; }
+h2 { font-size: 20px; margin: 40px 0 12px; letter-spacing: -0.01em; }
+h3 { font-size: 16px; margin: 28px 0 8px; color: var(--text); }
+
+p, li { color: var(--text-muted); }
+p { margin: 0 0 16px; }
+ul { padding-left: 20px; margin: 0 0 16px; }
+li { margin-bottom: 8px; }
+
+strong { color: var(--text); font-weight: 600; }
+a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--border); }
+a:hover { text-decoration-color: var(--red); }
+
+.lead { font-size: 18px; color: var(--text-muted); margin: 0; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 22px;
+  margin: 0 0 16px;
+}
+.card p:last-child, .card ul:last-child { margin-bottom: 0; }
+
+dl.contact { margin: 0; display: grid; grid-template-columns: minmax(0, 140px) 1fr; gap: 6px 16px; }
+dl.contact dt { color: var(--text-faint); font-size: 14px; }
+dl.contact dd { margin: 0; color: var(--text-muted); }
+
+@media (max-width: 460px) {
+  dl.contact { grid-template-columns: 1fr; gap: 2px; }
+  dl.contact dd { margin-bottom: 10px; }
+}
+
+footer.bottom {
+  margin-top: 56px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--text-faint);
+}
+footer.bottom a { color: var(--text-faint); }
+
+.updated { font-size: 14px; color: var(--text-faint); margin-top: 8px; }
